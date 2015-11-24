@@ -1,0 +1,88 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          bunnies 
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop bunnies daemon
+### END INIT INFO
+
+# ------------------------------------------------------------------------------
+# /etc/init.d/bunnies
+#
+# http://raspberrypi.stackexchange.com/questions/8734/execute-script-on-start-up/8735#8735
+# ------------------------------------------------------------------------------
+
+## home directory of this user!
+USER="pi"
+
+## Absolute path to the script 
+SCRIPT="/home/pi/bunny-watcher/run_bunnies.sh"
+
+## Absolute path to the screen binary.
+SCREEN="/usr/bin/screen"
+
+## Name of the screen session, you can then "screen -r $SCREEN_NAME" to get it back
+## to the forground and work with it on your shell.
+SCREEN_NAME="bunnies"
+
+## Absolute path to the scripts's PID file.
+PIDFILE="/tmp/bunnies"
+
+## Absolute path to scripts's XMLRPC socket.
+SOCKET="/tmp/bunnies.socket"
+
+## Check if the socket exists and if it exists delete it.
+delete_socket() {
+    if [[ -e $SOCKET ]]; then
+        rm -f $SOCKET
+    fi
+}
+
+case "$1" in
+    ## Start script in the background.
+    start)
+        echo "Starting bunnies"
+        delete_socket
+        echo start-stop-daemon --start --background --oknodo \
+            --pidfile "$PIDFILE" --make-pidfile \
+            --chuid $USER \
+            --exec $SCREEN -- -DmUS $SCREEN_NAME $SCRIPT
+        start-stop-daemon --start --background --oknodo \
+            --pidfile "$PIDFILE" --make-pidfile \
+            --chuid $USER \
+            --exec $SCREEN -- -DmUS $SCREEN_NAME $SCRIPT
+        if [[ $? -ne 0 ]]; then
+            echo "Error: bunnies failed to start."
+            exit 1
+        fi
+        echo "bunnies started successfully."
+        ;;
+
+    ## Stop script 
+    stop)
+        echo "Stopping bunnies"
+        start-stop-daemon --stop --oknodo --pidfile "$PIDFILE"
+        if [[ $? -ne 0 ]]; then
+            echo "Error: failed to stop bunnies process."
+            exit 1
+        fi
+        delete_socket
+        echo "bunnies stopped successfully."
+        ;;
+
+    ## Restart script 
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start || exit 1
+        ;;
+
+    ## Print usage information if the user gives an invalid option.
+    *)
+        echo "Usage: $0 [start|stop|restart]"
+        exit 1
+        ;;
+
+esac
