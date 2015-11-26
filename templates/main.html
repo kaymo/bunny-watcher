@@ -1,6 +1,15 @@
 {% extends "layout.html" %}
 {% block body %}
   <div id="camera-image">
-    <img src="{{ url_for('static', filename='captures/image1.jpg') }}"/>
+    <h1>Bunny Watcher</h1>
+    <img src="{{ url_for('static', filename='captures/current.jpg') }}"/>
+  </div>
+  <div class="prev-captures">
+    <h2>Previous Captures</h2>
+    {% for file in files %}
+      <a href="{{ url_for('static', filename='captures/') }}{{file}}">{{file}}</a><br/>
+    {% else %}
+      <p>No other captures.</p>
+    {% endfor %}
   </div>
 {% endblock %}

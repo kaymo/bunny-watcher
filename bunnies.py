@@ -1,5 +1,6 @@
 # Requires Flask and SQLite3
 from flask import Flask, url_for, render_template
+import os
 
 # Create the app
 app = Flask('sybil')
@@ -8,7 +9,12 @@ app.config['DEBUG'] = False
 # Index page
 @app.route("/") 
 def show_capture():
-    return render_template('main.html')
+    
+    # Get a list of the captures that doesn't include the current captures
+    files = sorted( os.listdir('static/captures/'), reverse=True )
+    files = files[2:]
+
+    return render_template('main.html', files=files)
 
 # Start the app and make available to all
 if __name__ == "__main__":
