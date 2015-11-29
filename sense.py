@@ -7,12 +7,14 @@ CAPTURES_DIR = "static/captures/"
 CURRENT_CAPTURE = CAPTURES_DIR + "current.jpg"
 INTERVAL = 60
 JPEG_QUALITY = 85
+
 FRAME_HEIGHT = 1536
 FRAME_WIDTH = 2304
-RGB_DARK_THRESHOLD = 20
+AUTO_BRIGHTNESS = 0.42
+AUTO_SATURATION = 0.46
+AUTO_CONTRAST   = 0.46
 
-# Open the camera device and create OpenCV object
-camera = cv2.VideoCapture(CAMERA_PORT)
+RGB_DARK_THRESHOLD = 20
  
 # Captures a single image from the camera and returns it in PIL format
 def get_image():
@@ -21,9 +23,9 @@ def get_image():
 
     # Discard any frames where every pixel is below an RGB threshold
     if retval:
-        for y in image:
-            for x in y:
-                for rgb in x:
+        for row in image:
+            for pixel in row:
+                for rgb in pixel:
                     if rgb > RGB_DARK_THRESHOLD:
                         return True, image
              
@@ -32,6 +34,9 @@ def get_image():
 # Get and print an OpenCV property
 def get_property( property, property_id ):    
     print "{}: {}".format(property, camera.get(property_id))
+
+# Open the camera device and create OpenCV object
+camera = cv2.VideoCapture(CAMERA_PORT)
 
 # Get the initial amera properties
 get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
@@ -43,9 +48,9 @@ get_property("saturation", cv.CV_CAP_PROP_SATURATION)
 print
 
 # Ensure that sensible values are set
-camera.set(cv.CV_CAP_PROP_BRIGHTNESS,   0.42)
-camera.set(cv.CV_CAP_PROP_CONTRAST,     0.46)
-camera.set(cv.CV_CAP_PROP_SATURATION,   0.46)
+camera.set(cv.CV_CAP_PROP_BRIGHTNESS,   AUTO_BRIGHTNESS)
+camera.set(cv.CV_CAP_PROP_CONTRAST,     AUTO_CONTRAST)
+camera.set(cv.CV_CAP_PROP_SATURATION,   AUTO_SATURATION)
 camera.set(cv.CV_CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH)
 camera.set(cv.CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
