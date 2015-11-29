@@ -1,25 +1,36 @@
+# Dependencies: OpenCV
 import cv2, time, datetime, shutil, os
 import cv2.cv as cv
  
-PORT = 0
-FILE = "static/captures/image1.jpg"
-INTERVAL = 10
-JPEG_QUALITY = 85
+CAMERA_PORT = 0
 CAPTURES_DIR = "static/captures/"
 CURRENT_CAPTURE = CAPTURES_DIR + "current.jpg"
+INTERVAL = 60
+JPEG_QUALITY = 85
+FRAME_HEIGHT = 1536
+FRAME_WIDTH = 2304
+RGB_DARK_THRESHOLD = 20
 
 # Open the camera device and create OpenCV object
-camera = cv2.VideoCapture(PORT)
+camera = cv2.VideoCapture(CAMERA_PORT)
  
 # Captures a single image from the camera and returns it in PIL format
 def get_image():
 
-    retval, im = camera.read()
-    return retval, im
+    retval, image = camera.read()
+
+    # Discard any frames where every pixel is below an RGB threshold
+    if retval:
+        for y in image:
+            for x in y:
+                for rgb in x:
+                    if rgb > RGB_DARK_THRESHOLD:
+                        return True, image
+             
+    return False, image
 
 # Get and print an OpenCV property
-def get_property( property, property_id ):
-    
+def get_property( property, property_id ):    
     print "{}: {}".format(property, camera.get(property_id))
 
 # Get the initial amera properties
@@ -35,8 +46,8 @@ print
 camera.set(cv.CV_CAP_PROP_BRIGHTNESS,   0.42)
 camera.set(cv.CV_CAP_PROP_CONTRAST,     0.46)
 camera.set(cv.CV_CAP_PROP_SATURATION,   0.46)
-camera.set(cv.CV_CAP_PROP_FRAME_WIDTH,  2304)
-camera.set(cv.CV_CAP_PROP_FRAME_HEIGHT, 1536)
+camera.set(cv.CV_CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH)
+camera.set(cv.CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
 get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
 get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
@@ -50,12 +61,9 @@ print("Capturing images ...")
 
 try:
     while 1:
-        time.sleep(INTERVAL)
-
         # Grab the image
         [result, camera_capture] = get_image()
         
-        # Overwrite the previous image
         if result:
 
             # Use the current time as the filename
@@ -75,6 +83,8 @@ try:
             # The files are ordered by filename (by age) so stop if a young file is found 
             else:
                 break
+
+        time.sleep(INTERVAL)
 
 except KeyboardInterrupt:
     print "\nQuitting ..."

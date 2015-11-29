@@ -1,4 +1,4 @@
-# Requires Flask and SQLite3
+# Dependencies: Flask
 from flask import Flask, url_for, render_template
 import os
 
