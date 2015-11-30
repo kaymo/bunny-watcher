@@ -14,20 +14,25 @@ AUTO_BRIGHTNESS = 0.42
 AUTO_SATURATION = 0.46
 AUTO_CONTRAST   = 0.46
 
-RGB_DARK_THRESHOLD = 20
+RGB_DARK_THRESHOLD = 40
  
 # Captures a single image from the camera and returns it in PIL format
 def get_image():
 
     retval, image = camera.read()
 
-    # Discard any frames where every pixel is below an RGB threshold
-    if retval:
-        for row in image:
-            for pixel in row:
-                for rgb in pixel:
-                    if rgb > RGB_DARK_THRESHOLD:
-                        return True, image
+    # Discard any frames that are too dark
+    if retval and len(image) and len(image[0]) and len(image[0][0]):
+        
+        # Keep image if the first pixel's avergae is greater than the threshold
+        if sum(image[0][0]) / len(image[0][0]) > RGB_DARK_THRESHOLD:
+            return True, image
+
+        # Keep image if the average pixel value is greater than a threshold
+        temp_pixels = [pixel for row in image for column in row for pixel in column]
+        avg_pixel = sum(temp_pixels) / len(image) / len(image[0]) / len(image[0][0])
+        if avg_pixel > RGB_DARK_THRESHOLD:
+            return True, image 
              
     return False, image
 
