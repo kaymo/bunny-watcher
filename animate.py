@@ -1,6 +1,6 @@
 import os
 
-CAPTURES_DIR = "./static/captures"
+CAPTURES_DIR = "/home/pi/bunny-watcher/static/captures"
 
 try:
 
