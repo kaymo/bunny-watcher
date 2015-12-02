@@ -12,7 +12,7 @@ def show_capture():
     
     # Get a list of the captures that doesn't include the current captures
     files = sorted( os.listdir('static/captures/'), reverse=True )
-    files = files[2:]
+    files = files[4:]
 
     return render_template('main.html', files=files)
 
