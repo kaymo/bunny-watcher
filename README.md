@@ -8,6 +8,7 @@ Keeping an eye on the bunnies.
 
 ### Optional
 * FFmpeg v2.6.5
+* Google API Client Library for Python v3
 
 ### Tested
 * Safari v8.0.6
