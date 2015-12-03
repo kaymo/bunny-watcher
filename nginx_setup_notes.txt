@@ -1,6 +1,0 @@
-https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-14-04
-
-https://www.digitalocean.com/community/questions/how-to-fix-502-bad-gateway-error-with-nginx-uwsgi-for-flask-app
-
-http://www.pratermade.com/2014/08/setting-up-your-raspberry-pi-environment/
-
