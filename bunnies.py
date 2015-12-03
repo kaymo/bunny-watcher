@@ -2,12 +2,14 @@
 from flask import Flask, url_for, render_template
 import os
 
+application = Flask(__name__)
+
 # Create the app
-app = Flask('sybil')
-app.config['DEBUG'] = False
+#app = Flask('sybil')
+application.config['DEBUG'] = False
 
 # Index page
-@app.route("/") 
+@application.route("/") 
 def show_capture():
     
     # Get a list of the captures that doesn't include the current captures
@@ -18,4 +20,4 @@ def show_capture():
 
 # Start the app and make available to all
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001)
+    application.run(host='0.0.0.0')
