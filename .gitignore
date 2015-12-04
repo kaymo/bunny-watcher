@@ -1,2 +1,4 @@
 captures/
 *.json
+*.pyc
+bunny-watcherenv/
