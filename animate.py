@@ -4,9 +4,9 @@ import os
 import datetime
 import shutil
 
-BUNNY_WATCHER_DIR = "/home/pi/bunny-watcher"
-CAPTURES_DIR = BUNNY_WATCHER_DIR + "/static/captures"
-VIDEOS_DIR = BUNNY_WATCHER_DIR + "/static/videos"
+BUNNY_WATCHER_DIR = os.path.expandvars("${HOME}/myrtle-watcher")
+CAPTURES_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/captures")
+VIDEOS_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/videos")
 
 if not os.path.exists(VIDEOS_DIR):
     os.makedirs(VIDEOS_DIR)
@@ -21,8 +21,8 @@ try:
 
     # Copy the mp4 to the back-up location
     curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
-    curr_mp4_path = os.path.join(VIDEOS_DIR, curr_time, ".mp4")
-    shutil.copyfile(curr_mp4_path, CURRENT_CAPTURE)
+    curr_mp4_path = os.path.join(VIDEOS_DIR, curr_time + ".mp4")
+    shutil.copyfile(os.path.join(CAPTURES_DIR, "animated.mp4"), curr_mp4_path)
 
     # YouTube details
     filename = "animated.mp4"
