@@ -11,11 +11,13 @@ application = Flask(__name__)
 application.config['DEBUG'] = False
 
 # Index page
-@application.route("/") 
+
+
+@application.route("/")
 def show_capture():
-    
+
     # Get a list of the captures that doesn't include the current captures
-    files = sorted( os.listdir('static/captures/'), reverse=True )
+    files = sorted(os.listdir('static/captures/'), reverse=True)
     files = files[4:]
 
     return render_template('main.html', files=files)
