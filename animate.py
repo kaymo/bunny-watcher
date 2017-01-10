@@ -28,8 +28,11 @@ try:
     filename = "animated.mp4"
     desc = "Bunny Watcher"
     category = "15"   # Pets & Animals YouTube category ID
-    title = (datetime.date.today() - datetime.timedelta(1)
-             ).strftime('%A %-e %B %Y')  # Yesterday's date
+    # Changing this to today's date as we're now uploading at 23:00!
+    # title = (datetime.date.today() - datetime.timedelta(1)
+    #         ).strftime('%A %-e %B %Y')  # Yesterday's date
+    title = "Bunnies - {}".format(
+        datetime.date.today().strftime('%A %-e %B %Y'))
 
     # Upload to YouTube
     os.system("python {}/upload_video.py --noauth_local_webserver --file='{}/{}' --title='{}' --description='{}' --category={}".format(
