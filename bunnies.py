@@ -17,10 +17,13 @@ application.config['DEBUG'] = False
 def show_capture():
 
     # Get a list of the captures that doesn't include the current captures
-    files = sorted(os.listdir('static/captures/'), reverse=True)
-    files = files[4:]
+    images = sorted(os.listdir('static/captures/'), reverse=True)
+    images = images[4:]
 
-    return render_template('main.html', files=files)
+    videos = sorted(os.listdir('static/videos/'), reverse=True)
+    videos = videos
+
+    return render_template('main.html', images=images, videos=videos)
 
 # Start the app and make available to all
 if __name__ == "__main__":

@@ -8,9 +8,17 @@
     <a href="{{ url_for('static', filename='captures/animated.gif') }}"><h2>yesterday.gif</h2></a>
   </div>
   <div class="prev-captures">
-    <h2>Previous Captures</h2>
-    {% for file in files %}
+    <h2>Previous Images</h2>
+    {% for file in images %}
       <a href="{{ url_for('static', filename='captures/') }}{{file}}">{{file}}</a><br/>
+    {% else %}
+      <p>No other captures.</p>
+    {% endfor %}
+  </div>
+  <div class="prev-captures">
+    <h2>Previous Videos</h2>
+    {% for file in videos %}
+      <a href="{{ url_for('static', filename='videos/') }}{{file}}">{{file}}</a><br/>
     {% else %}
       <p>No other captures.</p>
     {% endfor %}
