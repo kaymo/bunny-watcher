@@ -82,6 +82,9 @@ try:
             # Store the image in the history and copy over the 'current' view
             cv2.imwrite( CAPTURES_DIR + curr_time + ".jpg", camera_capture, [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
             shutil.copyfile( CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
+        else:
+            curr_time = datetime.datetime.now().isoformat().replace(".","_").replace(":","_")
+            print "Failed: " + curr_time
         
         # Delete if any images older than a day
         for fn in sorted(os.listdir( CAPTURES_DIR )):
