@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Dependencies: Flask
 from flask import Flask, url_for, render_template
 import os
@@ -21,3 +23,5 @@ def show_capture():
 # Start the app and make available to all
 if __name__ == "__main__":
     application.run(host='0.0.0.0')
+
+# EOF

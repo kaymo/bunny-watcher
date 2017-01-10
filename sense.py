@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Dependencies: OpenCV
 import cv2, time, datetime, shutil, os
 import cv2.cv as cv
@@ -105,3 +107,5 @@ except KeyboardInterrupt:
 # Clean up
 finally:
     del(camera)
+
+# EOF
