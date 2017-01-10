@@ -4,7 +4,7 @@ import os
 import datetime
 import shutil
 
-BUNNY_WATCHER_DIR = os.path.expandvars("${HOME}/myrtle-watcher")
+BUNNY_WATCHER_DIR = os.path.expandvars("${HOME}/bunny-watcher")
 CAPTURES_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/captures")
 VIDEOS_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/videos")
 
