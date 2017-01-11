@@ -22,11 +22,12 @@ def show_capture():
     images.remove("current.jpg")
     images.remove("animated.mp4")
     # and now remove whatever is currently showing!
+    current = images[0]
     images = images[1:]
 
     videos = sorted(os.listdir('static/videos/'), reverse=True)
 
-    return render_template('main.html', images=images, videos=videos)
+    return render_template('main.html', current=current, images=images, videos=videos)
 
 # Start the app and make available to all
 if __name__ == "__main__":

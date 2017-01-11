@@ -2,7 +2,7 @@
 {% block body %}
   <div id="camera-image">
     <h1>Bunny Watcher &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
-    <img src="{{ url_for('static', filename='captures/current.jpg') }}" alt="Bunnies!" />
+    <img src="{{ url_for('static', filename='captures/') }}{{current}}" alt="Bunnies!" />
     <br/>
     <br/>
     <a href="{{ url_for('static', filename='captures/animated.gif') }}"><h2>yesterday.gif</h2></a>
