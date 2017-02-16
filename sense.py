@@ -91,6 +91,11 @@ try:
             # Use the current time as the filename
             curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
 
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cv2.putText(camera_capture, time_str, (20, 70),
+                        font, 2.5, (255, 255, 255), 4)
+
             # Store the image in the history and copy over the 'current' view
             cv2.imwrite(CAPTURES_DIR + curr_time + ".jpg", camera_capture,
                         [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
