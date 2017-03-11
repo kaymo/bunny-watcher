@@ -17,7 +17,11 @@ try:
     # os.system("ffmpeg -y -framerate 10 -pattern_type glob -i '{}/2*.jpg' -pix_fmt rgb8 -ignore_loop 0 -s 576x384 {}/animated.gif".format(CAPTURES_DIR, CAPTURES_DIR) )
 
     # Create .mp4 for YouTube
-    os.system("ffmpeg -y -framerate 10 -pattern_type glob -i '{}/2*.jpg' -vcodec mpeg4 -q:v 10 {}/animated.mp4".format(CAPTURES_DIR, CAPTURES_DIR))
+    framerate = 10
+    ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{}/2*.jpg' -framerate {} -c:v libx264 -pix_fmt yuv420p -preset faster {}/animated.mp4"
+    ffmpeg_command = ffmpeg_command.format(
+        CAPTURES_DIR, framerate, CAPTURES_DIR)
+    os.system(ffmpeg_command)
 
     # Copy the mp4 to the back-up location
     curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
