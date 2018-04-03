@@ -7,6 +7,7 @@ import datetime
 import shutil
 import os
 import cv2.cv as cv
+import numpy
 
 CAMERA_PORT = 0
 CAPTURES_DIR = "static/captures/"
@@ -36,11 +37,15 @@ def get_image():
         if sum(image[0][0]) / len(image[0][0]) > RGB_DARK_THRESHOLD:
             return True, image
 
+	#
         # Keep image if the average pixel value is greater than a threshold
-        temp_pixels = [
-            pixel for row in image for column in row for pixel in column]
-        avg_pixel = sum(temp_pixels) / len(image) / \
-            len(image[0]) / len(image[0][0])
+	#
+	# https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
+	#
+	avg_color_per_row = numpy.average(image, axis=0)
+	avg_color_img = numpy.average(avg_color_per_row, axis=0)
+	avg_pixel = numpy.average(avg_color_img, axis=0)
+
         if avg_pixel > RGB_DARK_THRESHOLD:
             return True, image
 
