@@ -25,7 +25,7 @@ RGB_DARK_THRESHOLD = 40
 
 # Captures a single image from the camera and returns it in PIL format
 
-
+@profile
 def get_image():
 
     retval, image = camera.read()
@@ -86,48 +86,55 @@ get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
 print
 print("Capturing images ...")
 
-try:
-    while 1:
-        # Grab the image
-        [result, camera_capture] = get_image()
+@profile
+def main():
 
-        if result:
+    global camera
 
-            # Use the current time as the filename
-            curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+    try:
+        while 1:
+            # Grab the image
+            [result, camera_capture] = get_image()
 
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            cv2.putText(camera_capture, time_str, (20, 70),
-                        font, 2.5, (255, 255, 255), 4)
+            if result:
 
-            # Store the image in the history and copy over the 'current' view
-            cv2.imwrite(CAPTURES_DIR + curr_time + ".jpg", camera_capture,
-                        [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-            shutil.copyfile(CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
-        else:
-            curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
-            print "Failed: " + curr_time
+                # Use the current time as the filename
+                curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
 
-        # Delete if any images older than a day
-        for fn in sorted(os.listdir(CAPTURES_DIR)):
-            fp = os.path.join(CAPTURES_DIR, fn)
-            if os.stat(fp).st_mtime < time.time() - 86400:
-                if os.path.isfile(fp):
-                    os.remove(fp)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                cv2.putText(camera_capture, time_str, (20, 70),
+                            font, 2.5, (255, 255, 255), 4)
 
-            # The files are ordered by filename (by age) so stop if a young
-            # file is found
+                # Store the image in the history and copy over the 'current' view
+                cv2.imwrite(CAPTURES_DIR + curr_time + ".jpg", camera_capture,
+                            [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+                shutil.copyfile(CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
             else:
-                break
+                curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+                print "Failed: " + curr_time
 
-        time.sleep(INTERVAL)
+            # Delete if any images older than a day
+            for fn in sorted(os.listdir(CAPTURES_DIR)):
+                fp = os.path.join(CAPTURES_DIR, fn)
+                if os.stat(fp).st_mtime < time.time() - 86400:
+                    if os.path.isfile(fp):
+                        os.remove(fp)
 
-except KeyboardInterrupt:
-    print "\nQuitting ..."
+                # The files are ordered by filename (by age) so stop if a young
+                # file is found
+                else:
+                    break
 
-# Clean up
-finally:
-    del(camera)
+            time.sleep(INTERVAL)
+
+    except KeyboardInterrupt:
+        print "\nQuitting ..."
+
+    # Clean up
+    finally:
+        del(camera)
+
+main()
 
 # EOF
