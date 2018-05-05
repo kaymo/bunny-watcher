@@ -9,6 +9,10 @@ import os
 import cv2.cv as cv
 import numpy
 
+if 'profile' not in globals():
+    def profile(func):
+        return func
+
 CAMERA_PORT = 0
 CAPTURES_DIR = "static/captures/"
 CURRENT_CAPTURE = CAPTURES_DIR + "current.jpg"
@@ -93,7 +97,10 @@ def main():
 
     try:
         while 1:
+            print "LOOP"
+            start = datetime.datetime.now()
             # Grab the image
+            time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             [result, camera_capture] = get_image()
 
             if result:
@@ -102,7 +109,6 @@ def main():
                 curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
 
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 cv2.putText(camera_capture, time_str, (20, 70),
                             font, 2.5, (255, 255, 255), 4)
 
@@ -126,7 +132,14 @@ def main():
                 else:
                     break
 
-            time.sleep(INTERVAL)
+            end = datetime.datetime.now()
+            elapsed = end - start
+
+            interval = datetime.timedelta(seconds=INTERVAL)
+
+            sleep_cnt = interval - elapsed
+
+            time.sleep(sleep_cnt.total_seconds())
 
     except KeyboardInterrupt:
         print "\nQuitting ..."
