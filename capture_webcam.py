@@ -18,7 +18,7 @@ class CVWebcam(object):
 
     def __init__(self, capture_location):
 
-        self.CAMERA_PORT = 0
+        self.CAMERA_PORT = None
         self.CAPTURES_DIR = capture_location
         self.CURRENT_CAPTURE = os.path.join(self.CAPTURES_DIR, "current.jpg")
         self.INTERVAL = 60
@@ -31,6 +31,19 @@ class CVWebcam(object):
         self.AUTO_CONTRAST = 0.46
 
         self.RGB_DARK_THRESHOLD = 40
+
+        self.detect_camera_port()
+
+    def detect_camera_port(self):
+        name = "HD Pro Webcam C920"
+        for camera in os.listdir("/sys/class/video4linux"):
+            idx = camera.replace("video", "")
+            sys_dir = os.path.realpath(os.path.join(
+                "/sys/class/video4linux/", camera))
+            name_file = os.path.join(sys_dir, "name")
+            lines = open(name_file, "r").readlines()
+            if name in lines[0]:
+                self.CAMERA_PORT = int(idx)
 
     def get_image(self):
         """
@@ -67,8 +80,7 @@ class CVWebcam(object):
             get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
 
         retval, image = camera.read()
-
-        ret_val = False
+        print retval
 
         # Discard any frames that are too dark
         if retval and len(image) and len(image[0]) and len(image[0][0]):
@@ -76,18 +88,20 @@ class CVWebcam(object):
             # Keep image if the first pixel's avergae is greater than the threshold
             if sum(image[0][0]) / len(image[0][0]) > self.RGB_DARK_THRESHOLD:
                 ret_val = True
+            else:
+                #
+                # Keep image if the average pixel value is greater than a threshold
+                #
+                # https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
+                #
+                avg_color_per_row = numpy.average(image, axis=0)
+                avg_color_img = numpy.average(avg_color_per_row, axis=0)
+                avg_pixel = numpy.average(avg_color_img, axis=0)
 
-            #
-            # Keep image if the average pixel value is greater than a threshold
-            #
-            # https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
-            #
-            avg_color_per_row = numpy.average(image, axis=0)
-            avg_color_img = numpy.average(avg_color_per_row, axis=0)
-            avg_pixel = numpy.average(avg_color_img, axis=0)
-
-            if avg_pixel > self.RGB_DARK_THRESHOLD:
-                ret_val = True
+                if avg_pixel > self.RGB_DARK_THRESHOLD:
+                    ret_val = True
+                else:
+                    ret_val = False
 
         del(camera)
         return ret_val, image
