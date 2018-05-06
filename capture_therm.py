@@ -10,6 +10,7 @@ import platform
 import time
 import os
 import datetime
+import shutil
 
 try:
     if platform.system() == 'Darwin':
@@ -308,6 +309,7 @@ class UVCThermCam(object):
         self.min_c = ctok(5)
         self.max_c = ctok(28)
         self.colour_map = generate_colour_map()
+        self.current_capture = os.path.join(self.capture_location, "current.jpg")
 
     def capture(self, time_now):
         ctx = POINTER(uvc_context)()
@@ -368,7 +370,7 @@ class UVCThermCam(object):
                     img = raw_to_8bit(data)
                     img = cv2.LUT(img, self.colour_map)
                     timestr = time_now.strftime("%y%m%d-%H%M%S")
-                    fname = time_now.strftime("%Y%m%d-%H%M%S")
+                    fname = time_now.isoformat().replace(".", "_").replace(":", "_")
 
                     #
                     # Max/min values in the top-left
@@ -379,8 +381,11 @@ class UVCThermCam(object):
                     cv2.putText(img, time_str, (10, 26),
                                 font, 0.70, (40, 60, 215), 1, cv2.CV_AA)
 
-                    cv2.imwrite(os.path.join(
-                        self.capture_location, "{:s}.png".format(fname)), img)
+                    output_img = os.path.join(
+                        self.capture_location, "{:s}.png".format(fname))
+                    cv2.imwrite(output_img, img)
+                    shutil.copyfile(
+                        output_img, self.current_capture)
 
                 finally:
                     libuvc.uvc_stop_streaming(devh)
