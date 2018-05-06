@@ -29,71 +29,75 @@ RGB_DARK_THRESHOLD = 40
 
 # Captures a single image from the camera and returns it in PIL format
 
+
 @profile
 def get_image():
 
+    def get_property(property, property_id):
+        # print "{}: {}".format(property, camera.get(property_id))
+        pass
+
+    # Open the camera device and create OpenCV object
+    camera = cv2.VideoCapture(CAMERA_PORT)
+
+    if False:
+        # Get the initial amera properties
+        get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
+        get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
+        get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
+        get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
+        get_property("saturation", cv.CV_CAP_PROP_SATURATION)
+
+    # Ensure that sensible values are set
+    camera.set(cv.CV_CAP_PROP_BRIGHTNESS,   AUTO_BRIGHTNESS)
+    camera.set(cv.CV_CAP_PROP_CONTRAST,     AUTO_CONTRAST)
+    camera.set(cv.CV_CAP_PROP_SATURATION,   AUTO_SATURATION)
+    camera.set(cv.CV_CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH)
+    camera.set(cv.CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+
+    if False:
+        get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
+        get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
+        get_property("saturation", cv.CV_CAP_PROP_SATURATION)
+        get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
+        get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
+
     retval, image = camera.read()
+
+    ret_val = False
 
     # Discard any frames that are too dark
     if retval and len(image) and len(image[0]) and len(image[0][0]):
 
         # Keep image if the first pixel's avergae is greater than the threshold
         if sum(image[0][0]) / len(image[0][0]) > RGB_DARK_THRESHOLD:
-            return True, image
+            ret_val = True
 
-	#
+        #
         # Keep image if the average pixel value is greater than a threshold
-	#
-	# https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
-	#
-	avg_color_per_row = numpy.average(image, axis=0)
-	avg_color_img = numpy.average(avg_color_per_row, axis=0)
-	avg_pixel = numpy.average(avg_color_img, axis=0)
+        #
+        # https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
+        #
+        avg_color_per_row = numpy.average(image, axis=0)
+        avg_color_img = numpy.average(avg_color_per_row, axis=0)
+        avg_pixel = numpy.average(avg_color_img, axis=0)
 
         if avg_pixel > RGB_DARK_THRESHOLD:
-            return True, image
+            ret_val = True
 
-    return False, image
+    del(camera)
+    return ret_val, image
 
 # Get and print an OpenCV property
 
-
-def get_property(property, property_id):
-    print "{}: {}".format(property, camera.get(property_id))
-
-# Open the camera device and create OpenCV object
-camera = cv2.VideoCapture(CAMERA_PORT)
-
-# Get the initial amera properties
-get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
-get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
-get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
-get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
-get_property("saturation", cv.CV_CAP_PROP_SATURATION)
-
-print
-
-# Ensure that sensible values are set
-camera.set(cv.CV_CAP_PROP_BRIGHTNESS,   AUTO_BRIGHTNESS)
-camera.set(cv.CV_CAP_PROP_CONTRAST,     AUTO_CONTRAST)
-camera.set(cv.CV_CAP_PROP_SATURATION,   AUTO_SATURATION)
-camera.set(cv.CV_CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH)
-camera.set(cv.CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
-
-get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
-get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
-get_property("saturation", cv.CV_CAP_PROP_SATURATION)
-get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
-get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
 
 # Capture a still at regular intervals
 print
 print("Capturing images ...")
 
+
 @profile
 def main():
-
-    global camera
 
     try:
         while 1:
@@ -115,7 +119,8 @@ def main():
                 # Store the image in the history and copy over the 'current' view
                 cv2.imwrite(CAPTURES_DIR + curr_time + ".jpg", camera_capture,
                             [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-                shutil.copyfile(CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
+                shutil.copyfile(
+                    CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
             else:
                 curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
                 print "Failed: " + curr_time
@@ -144,9 +149,6 @@ def main():
     except KeyboardInterrupt:
         print "\nQuitting ..."
 
-    # Clean up
-    finally:
-        del(camera)
 
 main()
 
