@@ -1,7 +1,18 @@
+#!/usr/bin/env python
+
 # Dependencies: OpenCV
-import cv2, time, datetime, shutil, os
+import cv2
+import time
+import datetime
+import shutil
+import os
 import cv2.cv as cv
- 
+import numpy
+
+if 'profile' not in globals():
+    def profile(func):
+        return func
+
 CAMERA_PORT = 0
 CAPTURES_DIR = "static/captures/"
 CURRENT_CAPTURE = CAPTURES_DIR + "current.jpg"
@@ -12,32 +23,42 @@ FRAME_HEIGHT = 1536
 FRAME_WIDTH = 2304
 AUTO_BRIGHTNESS = 0.42
 AUTO_SATURATION = 0.46
-AUTO_CONTRAST   = 0.46
+AUTO_CONTRAST = 0.46
 
 RGB_DARK_THRESHOLD = 40
- 
+
 # Captures a single image from the camera and returns it in PIL format
+
+@profile
 def get_image():
 
     retval, image = camera.read()
 
     # Discard any frames that are too dark
     if retval and len(image) and len(image[0]) and len(image[0][0]):
-        
+
         # Keep image if the first pixel's avergae is greater than the threshold
         if sum(image[0][0]) / len(image[0][0]) > RGB_DARK_THRESHOLD:
             return True, image
 
+	#
         # Keep image if the average pixel value is greater than a threshold
-        temp_pixels = [pixel for row in image for column in row for pixel in column]
-        avg_pixel = sum(temp_pixels) / len(image) / len(image[0]) / len(image[0][0])
+	#
+	# https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
+	#
+	avg_color_per_row = numpy.average(image, axis=0)
+	avg_color_img = numpy.average(avg_color_per_row, axis=0)
+	avg_pixel = numpy.average(avg_color_img, axis=0)
+
         if avg_pixel > RGB_DARK_THRESHOLD:
-            return True, image 
-             
+            return True, image
+
     return False, image
 
 # Get and print an OpenCV property
-def get_property( property, property_id ):    
+
+
+def get_property(property, property_id):
     print "{}: {}".format(property, camera.get(property_id))
 
 # Open the camera device and create OpenCV object
@@ -69,36 +90,64 @@ get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
 print
 print("Capturing images ...")
 
-try:
-    while 1:
-        # Grab the image
-        [result, camera_capture] = get_image()
-        
-        if result:
+@profile
+def main():
 
-            # Use the current time as the filename
-            curr_time = datetime.datetime.now().isoformat().replace(".","_").replace(":","_")
+    global camera
 
-            # Store the image in the history and copy over the 'current' view
-            cv2.imwrite( CAPTURES_DIR + curr_time + ".jpg", camera_capture, [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-            shutil.copyfile( CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
-        
-        # Delete if any images older than a day
-        for fn in sorted(os.listdir( CAPTURES_DIR )):
-            fp = os.path.join(CAPTURES_DIR, fn)
-            if os.stat(fp).st_mtime < time.time() - 86400:
-                if os.path.isfile(fp):
-                    os.remove(fp)
-            
-            # The files are ordered by filename (by age) so stop if a young file is found 
+    try:
+        while 1:
+            print "LOOP"
+            start = datetime.datetime.now()
+            # Grab the image
+            time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            [result, camera_capture] = get_image()
+
+            if result:
+
+                # Use the current time as the filename
+                curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(camera_capture, time_str, (20, 70),
+                            font, 2.5, (255, 255, 255), 4)
+
+                # Store the image in the history and copy over the 'current' view
+                cv2.imwrite(CAPTURES_DIR + curr_time + ".jpg", camera_capture,
+                            [cv2.cv.CV_IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+                shutil.copyfile(CAPTURES_DIR + curr_time + ".jpg", CURRENT_CAPTURE)
             else:
-                break
+                curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+                print "Failed: " + curr_time
 
-        time.sleep(INTERVAL)
+            # Delete if any images older than a day
+            for fn in sorted(os.listdir(CAPTURES_DIR)):
+                fp = os.path.join(CAPTURES_DIR, fn)
+                if os.stat(fp).st_mtime < time.time() - 86400:
+                    if os.path.isfile(fp):
+                        os.remove(fp)
 
-except KeyboardInterrupt:
-    print "\nQuitting ..."
+                # The files are ordered by filename (by age) so stop if a young
+                # file is found
+                else:
+                    break
 
-# Clean up
-finally:
-    del(camera)
+            end = datetime.datetime.now()
+            elapsed = end - start
+
+            interval = datetime.timedelta(seconds=INTERVAL)
+
+            sleep_cnt = interval - elapsed
+
+            time.sleep(sleep_cnt.total_seconds())
+
+    except KeyboardInterrupt:
+        print "\nQuitting ..."
+
+    # Clean up
+    finally:
+        del(camera)
+
+main()
+
+# EOF
