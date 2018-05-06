@@ -92,7 +92,7 @@ class BunnySense(object):
 
 if __name__ == "__main__":
     capture_dir = "./static/captures"
-    bunny_sense = BunnySense(capture_dir, 10)
+    bunny_sense = BunnySense(capture_dir, 30)
     bunny_sense.main()
 
 # EOF
