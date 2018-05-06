@@ -11,6 +11,7 @@ import numpy
 from multiprocessing import Process
 
 from capture_webcam import CVWebcam
+from capture_therm import UVCThermCam
 
 bunny_sense = None
 time_now = None
@@ -23,11 +24,19 @@ def capture_webcam():
     bunny_sense.webcam.capture(time_now)
 
 
+def capture_thermcam():
+    global bunny_sense
+    global time_now
+
+    bunny_sense.thermcam.capture(time_now)
+
+
 class BunnySense(object):
 
     def __init__(self, output_dir, interval):
         self.CAPTURES_DIR = output_dir
         self.webcam = CVWebcam(output_dir)
+        self.thermcam = UVCThermCam(output_dir)
         self.INTERVAL = interval
 
     def main(self):
@@ -39,8 +48,11 @@ class BunnySense(object):
                 time_now = datetime.datetime.now()
 
                 p_webcam = Process(target=capture_webcam)
+                p_thermcam = Process(target=capture_thermcam)
                 p_webcam.start()
+                p_thermcam.start()
                 p_webcam.join()
+                p_thermcam.join()
 
                 # self.webcam.capture(time_now)
 
