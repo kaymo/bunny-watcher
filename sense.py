@@ -35,17 +35,37 @@ class BunnySense(object):
 
     def __init__(self, output_dir, interval):
         self.CAPTURES_DIR = output_dir
-        self.webcam = CVWebcam(output_dir)
-        self.thermcam = UVCThermCam(output_dir)
+        self.webcam_dir = os.path.join(output_dir, "webcam")
+        self.thermcam_dir = os.path.join(output_dir, "thermcam")
+        if not os.path.exists(self.webcam_dir):
+            os.makedirs(self.webcam_dir)
+        if not os.path.exists(self.thermcam_dir):
+            os.makedirs(self.thermcam_dir)
+        self.webcam = CVWebcam(self.webcam_dir)
+        self.thermcam = UVCThermCam(self.thermcam_dir)
         self.INTERVAL = interval
+
+    def clean_dir(self, dir_to_clean):
+
+        # Delete if any images older than a day
+        for fn in sorted(os.listdir(dir_to_clean)):
+            fp = os.path.join(dir_to_clean, fn)
+            if os.stat(fp).st_mtime < time.time() - 86400:
+                if os.path.isfile(fp):
+                    os.remove(fp)
+
+            # The files are ordered by filename (by age) so stop if a young
+            # file is found
+            else:
+                break
 
     def main(self):
         global time_now
 
         try:
             while 1:
-                print "LOOP"
                 time_now = datetime.datetime.now()
+                print "LOOP", str(time_now)
 
                 p_webcam = Process(target=capture_webcam)
                 p_thermcam = Process(target=capture_thermcam)
@@ -54,19 +74,8 @@ class BunnySense(object):
                 p_webcam.join()
                 p_thermcam.join()
 
-                # self.webcam.capture(time_now)
-
-                # Delete if any images older than a day
-                for fn in sorted(os.listdir(self.CAPTURES_DIR)):
-                    fp = os.path.join(self.CAPTURES_DIR, fn)
-                    if os.stat(fp).st_mtime < time.time() - 86400:
-                        if os.path.isfile(fp):
-                            os.remove(fp)
-
-                    # The files are ordered by filename (by age) so stop if a young
-                    # file is found
-                    else:
-                        break
+                self.clean_dir(self.webcam_dir)
+                self.clean_dir(self.thermcam_dir)
 
                 end = datetime.datetime.now()
                 elapsed = end - time_now
@@ -82,7 +91,7 @@ class BunnySense(object):
 
 
 if __name__ == "__main__":
-    capture_dir = "/tmp"
+    capture_dir = "./static/captures"
     bunny_sense = BunnySense(capture_dir, 10)
     bunny_sense.main()
 
