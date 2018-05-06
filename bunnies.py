@@ -36,7 +36,10 @@ def show_capture():
     videos = sorted(os.listdir('static/videos/'), reverse=True)
 
     return render_template(
-            'main.html', w_current="current.jpg", t_current="current.png", images=images, videos=videos, rand=int(binascii.hexlify(os.urandom(8)),16))
+        'main.html', w_current="current.jpg", t_current="current.png",
+        images=images, videos=videos,
+        rand=int(binascii.hexlify(os.urandom(8)),
+                 16))
 
 
 # Start the app and make available to all
