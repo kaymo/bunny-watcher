@@ -2,7 +2,7 @@
 {% block body %}
   <div id="camera-image">
     <h1>Bunny Watcher &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
-    <img src="{{ url_for('static', filename='captures/') }}{{current}}" alt="Bunnies!" />
+    <img src="{{ url_for('static', filename='captures/webcam/') }}{{current}}" alt="Bunnies!" />
     <br/>
     <br/>
     <a href="{{ url_for('static', filename='captures/animated.gif') }}"><h2>yesterday.gif</h2></a>
@@ -10,7 +10,7 @@
   <div class="prev-captures">
     <h2>Previous Images</h2>
     {% for file in images %}
-      <a href="{{ url_for('static', filename='captures/') }}{{file}}">{{file}}</a><br/>
+      <a href="{{ url_for('static', filename='captures/webcam/') }}{{file}}">{{file}}</a><br/>
     {% else %}
       <p>No other captures.</p>
     {% endfor %}
