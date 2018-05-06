@@ -309,7 +309,8 @@ class UVCThermCam(object):
         self.min_c = ctok(5)
         self.max_c = ctok(28)
         self.colour_map = generate_colour_map()
-        self.current_capture = os.path.join(self.capture_location, "current.jpg")
+        self.current_capture = os.path.join(
+            self.capture_location, "current.jpg")
 
     def capture(self, time_now):
         ctx = POINTER(uvc_context)()
