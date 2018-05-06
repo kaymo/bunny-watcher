@@ -8,8 +8,19 @@ import shutil
 import os
 import cv2.cv as cv
 import numpy
+from multiprocessing import Process
 
 from capture_webcam import CVWebcam
+
+bunny_sense = None
+time_now = None
+
+
+def capture_webcam():
+    global bunny_sense
+    global time_now
+
+    bunny_sense.webcam.capture(time_now)
 
 
 class BunnySense(object):
@@ -20,13 +31,18 @@ class BunnySense(object):
         self.INTERVAL = interval
 
     def main(self):
+        global time_now
 
         try:
             while 1:
                 print "LOOP"
                 time_now = datetime.datetime.now()
 
-                self.webcam.capture(time_now)
+                p_webcam = Process(target=capture_webcam)
+                p_webcam.start()
+                p_webcam.join()
+
+                # self.webcam.capture(time_now)
 
                 # Delete if any images older than a day
                 for fn in sorted(os.listdir(self.CAPTURES_DIR)):
