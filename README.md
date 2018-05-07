@@ -27,4 +27,4 @@ http://www.pratermade.com/2014/08/setting-up-your-raspberry-pi-environment/
 * Chrome v46.0.2490.80
 
 
-Kim Mroz, 2015
+Kim Mroz & Andrew V. Jones, 2015-2018
