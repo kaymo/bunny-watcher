@@ -98,7 +98,7 @@ class BunnySense(object):
 if __name__ == "__main__":
     with uvc_setup():
         capture_dir = "./static/captures"
-        bunny_sense = BunnySense(capture_dir, 20)
+        bunny_sense = BunnySense(capture_dir, 10)
         bunny_sense.main()
 
 # EOF

@@ -12,6 +12,8 @@ import os
 import datetime
 import shutil
 from contextlib import contextmanager
+from multiprocessing import Lock
+
 
 try:
     if platform.system() == 'Darwin':
@@ -156,11 +158,18 @@ def print_device_info(devh):
     print "FLIR serial #: {0}".format(repr(flir_sn.raw))
 
 
-BUF_SIZE = 2
+"""
+BUF_SIZE = 1
 q = Queue.Queue(BUF_SIZE)
+"""
+current_frame = [None, False]
+frame_mutex = Lock()
 
 
 def py_frame_callback(frame, userptr):
+
+    global current_frame
+    global frame_mutex
 
     array_pointer = cast(frame.contents.data, POINTER(
         c_uint16 * (frame.contents.width * frame.contents.height)))
@@ -180,8 +189,13 @@ def py_frame_callback(frame, userptr):
             2 * frame.contents.width * frame.contents.height):
         return
 
+    """
     if not q.full():
         q.put(data)
+    """
+
+    with frame_mutex:
+        current_frame = [data, False]
 
 
 PTR_PY_FRAME_CALLBACK = CFUNCTYPE(
@@ -365,7 +379,9 @@ class UVCThermCam(object):
             self.capture_location, "current.png")
 
     def capture(self, time_now):
-        print "START"
+        global current_frame
+        global frame_mutex
+        """
         try:
             print "SLEEPING"
             data = q.get(True, 1)
@@ -373,11 +389,22 @@ class UVCThermCam(object):
         except Queue.Empty as e:
             print "EMPTY"
             return
+        """
 
-        print "DONE"
+        if current_frame[1]:
+            print "STALE FRAME"
+            time.sleep(1)
+
+        if current_frame[1]:
+            print "STILL STALE"
+            return
+
+        data = current_frame[0]
+        with frame_mutex:
+            current_frame[1] = True
 
         if data is None:
-            print "NONE"
+            print "NO THERM FRAME"
             return
 
         data = cv2.resize(data[:, :], (640, 480))
@@ -408,7 +435,6 @@ class UVCThermCam(object):
         cv2.imwrite(output_img, img)
         shutil.copyfile(
             output_img, self.current_capture)
-        print "DONE"
 
 
 if __name__ == "__main__":
