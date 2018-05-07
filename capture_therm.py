@@ -200,7 +200,7 @@ def py_frame_callback(frame, userptr):
     frame_mutex.acquire()
     frame_watchdog += 1
     if frame_watchdog >= watchdog_count:
-        print "UPDATING: {:d}".format(frame_watchdog)
+        print "THERM: UPDATING: {:d}".format(frame_watchdog)
         frame_watchdog = 0
     current_frame = [data, False]
     frame_mutex.release()
@@ -400,11 +400,11 @@ class UVCThermCam(object):
         """
 
         if current_frame[1]:
-            print "STALE FRAME"
+            print "THERM: STALE FRAME {:s}".format(str(time_now))
             time.sleep(1)
 
         if current_frame[1]:
-            print "STILL STALE"
+            print "THERM: STILL STALE {:s}".format(str(time_now))
             return
 
         frame_mutex.acquire()
@@ -413,7 +413,7 @@ class UVCThermCam(object):
         frame_mutex.release()
 
         if data is None:
-            print "NO THERM FRAME"
+            print "THERM: NO THERM FRAME {:s}".format(str(time_now))
             return
 
         data = cv2.resize(data[:, :], (640, 480))

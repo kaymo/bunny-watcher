@@ -80,7 +80,6 @@ class CVWebcam(object):
             get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
 
         retval, image = camera.read()
-        print retval
 
         # Discard any frames that are too dark
         if retval and len(image) and len(image[0]) and len(image[0][0]):
@@ -132,7 +131,7 @@ class CVWebcam(object):
                 output_img, self.CURRENT_CAPTURE)
         else:
             curr_time = time_now.isoformat().replace(".", "_").replace(":", "_")
-            print "Failed: " + curr_time
+            print "No result for webcam at " + curr_time
 
 
 if __name__ == "__main__":
