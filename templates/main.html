@@ -2,8 +2,12 @@
 {% block body %}
   <h1>Bunny Watcher &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
   <div class="current">
-    <img src="{{ url_for('static', filename='captures/webcam/') }}{{w_current}}?id={{rand}}" alt="Visible Bunnies!" />
-    <img src="{{ url_for('static', filename='captures/thermcam/') }}{{t_current}}?id={{rand}}" alt="Hot Bunnies!" />
+    <a href="{{ url_for('static', filename='captures/webcam/') }}{{w_current}}?id={{rand}}">
+      <img src="{{ url_for('static', filename='captures/webcam/') }}{{w_current}}?id={{rand}}" alt="Visible Bunnies!" />
+    </a>
+    <a href="{{ url_for('static', filename='captures/thermcam/') }}{{t_current}}?id={{rand}}">
+      <img src="{{ url_for('static', filename='captures/thermcam/') }}{{t_current}}?id={{rand}}" alt="Hot Bunnies!" />
+    </a>
   </div>
   <br/>
   <div class="previous">
