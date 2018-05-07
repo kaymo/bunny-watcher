@@ -162,7 +162,7 @@ def print_device_info(devh):
 BUF_SIZE = 1
 q = Queue.Queue(BUF_SIZE)
 """
-current_frame = [None, False]
+current_frame = [None, True]
 frame_mutex = Lock()
 frame_watchdog = 0
 watchdog_count = 25
@@ -409,7 +409,7 @@ class UVCThermCam(object):
 
         frame_mutex.acquire()
         data = current_frame[0]
-        current_frame[1] = True
+        current_frame = [None, True]
         frame_mutex.release()
 
         if data is None:
