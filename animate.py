@@ -39,8 +39,14 @@ try:
     # ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{input:s}/2*.jpg' -framerate {framerate:d} -vcodec libx264 -crf 25 -preset medium -pix_fmt yuv420p {output:s}/animated.mp4"
     # ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{input:s}/2*.jpg' -framerate {framerate:d} -c:v libx264 -pix_fmt yuv420p -preset ultrafast -crf 28 {output:s}/animated.mp4"
     # ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{input:s}/2*.jpg' -framerate {framerate:d} -c:v libx264 -flags:v '+cgop' -g 15 -bf 1 -coder ac -profile:v high -crf 21 -pix_fmt yuv420p -movflags faststart {output:s}/animated.mp4"
+
     ffmpeg_command = ffmpeg_command.format(
-        input=CAPTURES_DIR, ext=ext_map[CAMERA], framerate=framerate, quality=quality, output=CAPTURES_DIR, filename=filename)
+        input=CAPTURES_DIR, ext=ext_map[CAMERA],
+        framerate=framerate, quality=quality, output=CAPTURES_DIR,
+        filename=filename)
+
+    print ffmpeg_command
+
     os.system(ffmpeg_command)
 
     # Copy the mp4 to the back-up location
@@ -55,11 +61,11 @@ try:
     # title = (datetime.date.today() - datetime.timedelta(1)
     #         ).strftime('%A %-e %B %Y')  # Yesterday's date
     title = "Bunnies ({:s}) - {}".format(CAMERA,
-        datetime.date.today().strftime('%A %-e %B %Y'))
+                                         datetime.date.today().strftime('%A %-e %B %Y'))
 
     # Upload to YouTube
-    os.system("python {}/upload_video.py --noauth_local_webserver --file='{}/{}' --title='{}' --description='{}' --category={}".format(
-        BUNNY_WATCHER_DIR, CAPTURES_DIR, filename, title, desc, category))
+    # os.system("python {}/upload_video.py --noauth_local_webserver --file='{}/{}' --title='{}' --description='{}' --category={}".format(
+    #    BUNNY_WATCHER_DIR, CAPTURES_DIR, filename, title, desc, category))
 
 except KeyboardInterrupt:
     print "Quitting ..."
