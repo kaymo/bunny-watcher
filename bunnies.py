@@ -19,7 +19,7 @@ def sorted_ls(path):
 
 def get_capture_names(path):
     # Get a list of the captures
-    captures = sorted_ls(path)
+    captures = os.listdir(path)
 
     # Remove the file extensions
     captures = [filename[:-4] for filename in captures]
