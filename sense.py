@@ -8,10 +8,11 @@ import shutil
 import os
 import cv2.cv as cv
 import numpy
+import sys
 from multiprocessing import Process
 
 from capture_webcam import CVWebcam
-from capture_therm import UVCThermCam
+from capture_therm import UVCThermCam, uvc_setup
 
 bunny_sense = None
 time_now = None
@@ -62,8 +63,8 @@ class BunnySense(object):
     def main(self):
         global time_now
 
-        try:
-            while 1:
+        while True:
+            try:
                 time_now = datetime.datetime.now()
                 print "LOOP", str(time_now)
 
@@ -86,13 +87,18 @@ class BunnySense(object):
 
                 time.sleep(sleep_cnt.total_seconds())
 
-        except KeyboardInterrupt:
-            print "\nQuitting ..."
+            except KeyboardInterrupt as _:
+                print "\nQuitting ..."
+                break
+            except Exception as e:
+                print str(e)
+                continue
 
 
 if __name__ == "__main__":
-    capture_dir = "./static/captures"
-    bunny_sense = BunnySense(capture_dir, 30)
-    bunny_sense.main()
+    with uvc_setup():
+        capture_dir = "./static/captures"
+        bunny_sense = BunnySense(capture_dir, 20)
+        bunny_sense.main()
 
 # EOF

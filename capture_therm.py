@@ -11,6 +11,7 @@ import time
 import os
 import datetime
 import shutil
+from contextlib import contextmanager
 
 try:
     if platform.system() == 'Darwin':
@@ -302,6 +303,57 @@ def display_temperature(img, val_k, loc, color):
     cv2.line(img, (x, y - 2), (x, y + 2), color, 1)
 
 
+@contextmanager
+def uvc_setup():
+    ctx = POINTER(uvc_context)()
+    dev = POINTER(uvc_device)()
+    devh = POINTER(uvc_device_handle)()
+    ctrl = uvc_stream_ctrl()
+
+    res = libuvc.uvc_init(byref(ctx), 0)
+    if res < 0:
+        print "uvc_init error"
+        return
+
+    try:
+        res = libuvc.uvc_find_device(ctx, byref(dev), 0, 0, 0)
+        if res < 0:
+            print "uvc_find_device error"
+            return
+
+        try:
+            res = libuvc.uvc_open(dev, byref(devh))
+            if res < 0:
+                print "uvc_open error"
+                return
+
+            print "device opened!"
+
+            print_device_info(devh)
+
+            libuvc.uvc_get_stream_ctrl_format_size(
+                devh, byref(ctrl),
+                UVC_FRAME_FORMAT_Y16, 160, 120, 9)
+
+            res = libuvc.uvc_start_streaming(
+                devh, byref(ctrl),
+                PTR_PY_FRAME_CALLBACK, None, 0)
+            if res < 0:
+                print "uvc_start_streaming failed: {0}".format(res)
+                return
+
+            try:
+                yield
+
+            finally:
+                libuvc.uvc_stop_streaming(devh)
+
+        finally:
+            libuvc.uvc_unref_device(dev)
+    finally:
+        libuvc.uvc_exit(ctx)
+
+
 class UVCThermCam(object):
 
     def __init__(self, capture_location):
@@ -313,95 +365,59 @@ class UVCThermCam(object):
             self.capture_location, "current.png")
 
     def capture(self, time_now):
-        ctx = POINTER(uvc_context)()
-        dev = POINTER(uvc_device)()
-        devh = POINTER(uvc_device_handle)()
-        ctrl = uvc_stream_ctrl()
-
-        res = libuvc.uvc_init(byref(ctx), 0)
-        if res < 0:
-            print "uvc_init error"
+        print "START"
+        try:
+            print "SLEEPING"
+            data = q.get(True, 1)
+            print "DONE"
+        except Queue.Empty as e:
+            print "EMPTY"
             return
 
-        try:
-            res = libuvc.uvc_find_device(ctx, byref(dev), 0, 0, 0)
-            if res < 0:
-                print "uvc_find_device error"
-                return
+        print "DONE"
 
-            try:
-                res = libuvc.uvc_open(dev, byref(devh))
-                if res < 0:
-                    print "uvc_open error"
-                    return
+        if data is None:
+            print "NONE"
+            return
 
-                print "device opened!"
+        data = cv2.resize(data[:, :], (640, 480))
+        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(data)
 
-                print_device_info(devh)
+        #
+        # Dirty-hack to ensure that the LUT is always scaled
+        # against the colours we care about
+        #
+        data[0][0] = self.min_c
+        data[-1][-1] = self.max_c
+        img = raw_to_8bit(data)
+        img = cv2.LUT(img, self.colour_map)
+        timestr = time_now.strftime("%y%m%d-%H%M%S")
+        fname = time_now.isoformat().replace(".", "_").replace(":", "_")
 
-                libuvc.uvc_get_stream_ctrl_format_size(
-                    devh, byref(ctrl),
-                    UVC_FRAME_FORMAT_Y16, 160, 120, 9)
+        #
+        # Max/min values in the top-left
+        #
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        time_str = "{:s} ({:.2f}, {:.2f})".format(
+            timestr, ktoc(minVal), ktoc(maxVal))
+        cv2.putText(img, time_str, (10, 26),
+                    font, 0.70, (40, 60, 215), 1, cv2.CV_AA)
 
-                res = libuvc.uvc_start_streaming(
-                    devh, byref(ctrl),
-                    PTR_PY_FRAME_CALLBACK, None, 0)
-                if res < 0:
-                    print "uvc_start_streaming failed: {0}".format(res)
-                    return
-
-                try:
-                    try:
-                        data = q.get(True, 500)
-                    except Queue.Empty as e:
-                        return
-
-                    if data is None:
-                        return
-
-                    data = cv2.resize(data[:, :], (640, 480))
-                    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(data)
-
-                    #
-                    # Dirty-hack to ensure that the LUT is always scaled
-                    # against the colours we care about
-                    #
-                    data[0][0] = self.min_c
-                    data[-1][-1] = self.max_c
-                    img = raw_to_8bit(data)
-                    img = cv2.LUT(img, self.colour_map)
-                    timestr = time_now.strftime("%y%m%d-%H%M%S")
-                    fname = time_now.isoformat().replace(".", "_").replace(":", "_")
-
-                    #
-                    # Max/min values in the top-left
-                    #
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    time_str = "{:s} ({:.2f}, {:.2f})".format(
-                        timestr, ktoc(minVal), ktoc(maxVal))
-                    cv2.putText(img, time_str, (10, 26),
-                                font, 0.70, (40, 60, 215), 1, cv2.CV_AA)
-
-                    output_img = os.path.join(
-                        self.capture_location, "{:s}.png".format(fname))
-                    cv2.imwrite(output_img, img)
-                    shutil.copyfile(
-                        output_img, self.current_capture)
-
-                finally:
-                    libuvc.uvc_stop_streaming(devh)
-
-                print "done"
-            finally:
-                libuvc.uvc_unref_device(dev)
-        finally:
-            libuvc.uvc_exit(ctx)
+        output_img = os.path.join(
+            self.capture_location, "{:s}.png".format(fname))
+        cv2.imwrite(output_img, img)
+        shutil.copyfile(
+            output_img, self.current_capture)
+        print "DONE"
 
 
 if __name__ == "__main__":
-    time_now = datetime.datetime.now()
 
-    thermcam = UVCThermCam("/tmp")
-    thermcam.capture(time_now)
+    with uvc_setup():
+        while True:
+            time_now = datetime.datetime.now()
+            thermcam = UVCThermCam("/tmp")
+            thermcam.capture(time_now)
+            time.sleep(0.1)
 
 # EOF
