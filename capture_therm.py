@@ -162,7 +162,7 @@ def print_device_info(devh):
 BUF_SIZE = 1
 q = Queue.Queue(BUF_SIZE)
 """
-current_frame = [None, True]
+current_frame = [None, False]
 frame_mutex = Lock()
 frame_watchdog = 0
 watchdog_count = 25
@@ -201,6 +201,7 @@ def py_frame_callback(frame, userptr):
     frame_watchdog += 1
     if frame_watchdog >= watchdog_count:
         print "THERM: UPDATING: {:d}".format(frame_watchdog)
+        print "THERM: {:d}".format(len(data))
         frame_watchdog = 0
     current_frame = [data, False]
     frame_mutex.release()
@@ -385,8 +386,11 @@ class UVCThermCam(object):
         self.colour_map = generate_colour_map()
         self.current_capture = os.path.join(
             self.capture_location, "current.png")
+        self.invalid_captures = 0
 
     def capture(self, time_now):
+        print "THERM: ENTER"
+
         global current_frame
         global frame_mutex
         """
@@ -405,6 +409,12 @@ class UVCThermCam(object):
 
         if current_frame[1]:
             print "THERM: STILL STALE {:s}".format(str(time_now))
+            self.invalid_captures += 1
+
+            if self.invalid_captures > 1:
+                print "THERM: NO CAPTURES"
+                sys.exit()
+
             return
 
         frame_mutex.acquire()
@@ -414,6 +424,12 @@ class UVCThermCam(object):
 
         if data is None:
             print "THERM: NO THERM FRAME {:s}".format(str(time_now))
+            self.invalid_captures += 1
+
+            if self.invalid_captures > 1:
+                print "THERM: NO CAPTURES"
+                sys.exit()
+
             return
 
         data = cv2.resize(data[:, :], (640, 480))
@@ -444,6 +460,8 @@ class UVCThermCam(object):
         cv2.imwrite(output_img, img)
         shutil.copyfile(
             output_img, self.current_capture)
+
+        print "THERM: DONE!"
 
 
 if __name__ == "__main__":
