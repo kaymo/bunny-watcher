@@ -2,27 +2,27 @@
 {% block body %}
   <h1>Bunny Watcher &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
   <div class="current">
-    <a href="{{ url_for('static', filename='captures/webcam/') }}{{w_current}}?id={{rand}}">
-      <img src="{{ url_for('static', filename='captures/webcam/') }}{{w_current}}?id={{rand}}" alt="Visible Bunnies!" />
+    <a href="{{ url_for('static', filename='captures/webcam/' + capture_name + '.jpg') }}">
+      <img src="{{ url_for('static', filename='captures/webcam/' + capture_name + '.jpg') }}" alt="Visible Bunnies!" />
     </a>
-    <a href="{{ url_for('static', filename='captures/thermcam/') }}{{t_current}}?id={{rand}}">
-      <img src="{{ url_for('static', filename='captures/thermcam/') }}{{t_current}}?id={{rand}}" alt="Hot Bunnies!" />
+    <a href="{{ url_for('static', filename='captures/thermcam/' + capture_name + '.png') }}">
+      <img src="{{ url_for('static', filename='captures/thermcam/' + capture_name + '.png') }}" alt="Hot Bunnies!" />
     </a>
   </div>
   <br/>
   <div class="previous">
     <div class="previous__subcategory">
       <h2>Previous Images</h2>
-      {% for file in images %}
-        <a href="{{ url_for('static', filename='captures/webcam/') }}{{file}}">{{file[:-4]}}</a><br/>
+      {% for capture in captures %}
+        <a href="{{ url_for('show_capture', capture=capture) }}">{{capture}}</a><br/>
       {% else %}
         <p>No previous captures.</p>
       {% endfor %}
     </div>
     <div class="previous__subcategory">
       <h2>Previous Videos</h2>
-      {% for file in videos %}
-        <a href="{{ url_for('static', filename='videos/') }}{{file}}">{{file[:-4]}}</a><br/>
+      {% for video in videos %}
+        <a href="{{ url_for('static', filename='videos/') }}{{video}}">{{video[:-4]}}</a><br/>
       {% else %}
         <p>No previous videos.</p>
       {% endfor %}

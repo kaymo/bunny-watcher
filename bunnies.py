@@ -1,45 +1,41 @@
 #!/usr/bin/env python
 
 # Dependencies: Flask
-from flask import Flask, url_for, render_template
+from flask import Flask, url_for, render_template, request
 import os
 import binascii
 
 application = Flask(__name__)
 
 # Create the app
-#app = Flask('sybil')
 application.config['DEBUG'] = False
 
+def remove_items(full_list, to_remove):
+    return [item for item in full_list if not item in to_remove]
+
 # Index page
-
-
 @application.route("/")
 def show_capture():
+    capture = request.args.get('capture')
+    print capture
 
     # Get a list of the captures that doesn't include the current captures
-    images = sorted(os.listdir('static/captures/webcam/'), reverse=True)
-    # remove "current" and "animated"
-    try:
-        images.remove("current.jpg")
-    except:
-        pass
+    captures = sorted(os.listdir('static/captures/webcam/'), reverse=True)
+    
+    # Remove "current" and "animated" and "webcam"
+    captures = remove_items(captures, ["current.jpg", "webcam.mp4", "animated.mp4"])
 
-    try:
-        images.remove("animated.mp4")
-    except:
-        pass
-    # and now remove whatever is currently showing!
-    current = images[0]
-    images = images[1:]
+    # Remove the file extensions
+    captures = [filename[:-4] for filename in captures]
+
+    # Set the capture being shown as either the selected one, or the first available (without the file extension)
+    if capture == None:
+        capture = captures[0]
 
     videos = sorted(os.listdir('static/videos/'), reverse=True)
 
-    return render_template(
-        'main.html', w_current="current.jpg", t_current="current.png",
-        images=images, videos=videos,
-        rand=int(binascii.hexlify(os.urandom(8)),
-                 16))
+    return render_template('main.html', 
+        capture_name=capture, captures=captures, videos=videos)
 
 
 # Start the app and make available to all
