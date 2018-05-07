@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Dependencies: Flask
-from flask import Flask, url_for, render_template, request
+from flask import Flask, url_for, render_template, request, redirect
 import os
 import binascii
 
@@ -33,7 +33,6 @@ def get_capture_names(path):
 @application.route("/")
 def show_capture():
     capture = request.args.get('capture')
-    print capture
 
     # Get a list of the captures
     captures_web = get_capture_names('static/captures/webcam/')
@@ -54,6 +53,38 @@ def show_capture():
     return render_template('main.html', 
         capture_name=capture, show_webcam=show_webcam, show_thermcam=show_thermcam,
         captures=captures, videos=videos)
+
+
+def get_next_capture(capture, go_back):
+    # Get a list of the captures
+    captures_web = get_capture_names('static/captures/webcam/')
+    captures_therm = get_capture_names('static/captures/thermcam/')
+
+    # Get the deduped joint list of captures
+    captures = list(sorted(set(captures_web + captures_therm), reverse=True))
+
+    # Index of current capture
+    try:
+        index = captures.index(capture)
+    except:
+        return capture
+
+    new_index = index - 1 if go_back else index + 1
+
+    if new_index < 0 or new_index >= len(captures):
+        return capture
+
+    return captures[new_index]
+
+
+# Navigate between captures using arrow left/right
+@application.route("/next")
+def next_capture():
+    capture = request.args.get('capture')
+    back = request.args.get('back')
+
+    next_capture = get_next_capture(capture, back == '1')
+    return redirect(url_for('show_capture', capture=next_capture))
 
 
 # Start the app and make available to all
