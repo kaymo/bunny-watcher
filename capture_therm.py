@@ -164,12 +164,15 @@ q = Queue.Queue(BUF_SIZE)
 """
 current_frame = [None, False]
 frame_mutex = Lock()
+frame_watchdog = 0
+watchdog_count = 25
 
 
 def py_frame_callback(frame, userptr):
 
     global current_frame
     global frame_mutex
+    global frame_watchdog
 
     array_pointer = cast(frame.contents.data, POINTER(
         c_uint16 * (frame.contents.width * frame.contents.height)))
@@ -194,8 +197,13 @@ def py_frame_callback(frame, userptr):
         q.put(data)
     """
 
-    with frame_mutex:
-        current_frame = [data, False]
+    frame_mutex.acquire()
+    frame_watchdog += 1
+    if frame_watchdog >= watchdog_count:
+        print "UPDATING: {:d}".format(frame_watchdog)
+        frame_watchdog = 0
+    current_frame = [data, False]
+    frame_mutex.release()
 
 
 PTR_PY_FRAME_CALLBACK = CFUNCTYPE(
@@ -399,9 +407,10 @@ class UVCThermCam(object):
             print "STILL STALE"
             return
 
+        frame_mutex.acquire()
         data = current_frame[0]
-        with frame_mutex:
-            current_frame[1] = True
+        current_frame[1] = True
+        frame_mutex.release()
 
         if data is None:
             print "NO THERM FRAME"
