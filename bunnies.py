@@ -13,12 +13,15 @@ application.config['DEBUG'] = False
 
 # Index page
 
+def sorted_ls(path):
+    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+    return list(sorted(os.listdir(path), key=mtime, reverse=True))
 
 @application.route("/")
 def show_capture():
 
     # Get a list of the captures that doesn't include the current captures
-    images = sorted(os.listdir('static/captures/webcam/'), reverse=True)
+    images = sorted_ls('static/captures/webcam/')
     # remove "current" and "animated"
     try:
         images.remove("current.jpg")
@@ -33,7 +36,7 @@ def show_capture():
     current = images[0]
     images = images[1:]
 
-    videos = sorted(os.listdir('static/videos/'), reverse=True)
+    videos = sorted_ls('static/videos/')
 
     return render_template(
         'main.html', w_current="current.jpg", t_current="current.png",
