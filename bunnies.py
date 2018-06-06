@@ -21,10 +21,13 @@ def sorted_ls(path):
 
 def get_capture_names(path, limit=False):
     # Get a list of the captures
-    captures = os.listdir(path)
+    captures = reversed(sorted(os.listdir(path)))
 
     # Remove the file extensions
     captures = [filename[:-4] for filename in captures]
+
+    # Remove "current" and "animated" and "webcam"
+    captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
 
     if limit:
         image_count = len(captures)
@@ -35,9 +38,6 @@ def get_capture_names(path, limit=False):
         indexes = sorted(list(set([int(round(x)) for x in np.logspace(0, max_in_base, num=select_count, base=base)])))
 
         captures = [captures[idx-1] for idx in indexes]
-
-    # Remove "current" and "animated" and "webcam"
-    captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
 
     return captures
 
