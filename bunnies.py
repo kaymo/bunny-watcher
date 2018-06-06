@@ -4,6 +4,8 @@
 from flask import Flask, url_for, render_template, request, redirect
 import os
 import binascii
+import numpy as np
+import math
 
 application = Flask(__name__)
 
@@ -17,12 +19,22 @@ def sorted_ls(path):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
     return list(sorted(os.listdir(path), key=mtime, reverse=True))
 
-def get_capture_names(path):
+def get_capture_names(path, limit=False):
     # Get a list of the captures
     captures = os.listdir(path)
 
     # Remove the file extensions
     captures = [filename[:-4] for filename in captures]
+
+    if limit:
+        image_count = len(captures)
+        select_count = 300
+        base = 10.0
+        max_in_base = math.log(image_count, base)
+
+        indexes = sorted(list(set([int(round(x)) for x in np.logspace(0, max_in_base, num=select_count, base=base)])))
+
+        captures = [captures[idx-1] for idx in indexes]
 
     # Remove "current" and "animated" and "webcam"
     captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
@@ -36,7 +48,7 @@ def show_capture():
 
     # Get a list of the captures
     captures_web = get_capture_names('static/captures/webcam/')
-    captures_therm = get_capture_names('static/captures/thermcam/')
+    captures_therm = get_capture_names('static/captures/thermcam/', limit=True)
 
     # Get the deduped joint list of captures
     captures = list(sorted(set(captures_web + captures_therm), reverse=True))
