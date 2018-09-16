@@ -11,6 +11,7 @@ import time
 import os
 import datetime
 import shutil
+import sys
 from contextlib import contextmanager
 from multiprocessing import Lock
 
@@ -182,6 +183,8 @@ def py_frame_callback(frame, userptr):
         frame.contents.height, frame.contents.width
     )  # no copy
 
+    data = np.copy(data)
+
     # data = np.fromiter(
     #   frame.contents.data, dtype=np.dtype(np.uint8), count=frame.contents.data_bytes
     # ).reshape(
@@ -339,7 +342,7 @@ def uvc_setup():
         return
 
     try:
-        res = libuvc.uvc_find_device(ctx, byref(dev), 0, 0, 0)
+        res = libuvc.uvc_find_device(ctx, byref(dev), 0x1e4e, 0x0100, 0)
         if res < 0:
             print "uvc_find_device error"
             return
@@ -411,26 +414,29 @@ class UVCThermCam(object):
             print "THERM: STILL STALE {:s}".format(str(time_now))
             self.invalid_captures += 1
 
-            if self.invalid_captures > 1:
-                print "THERM: NO CAPTURES"
+            if self.invalid_captures > 2:
+                print "THERM: VERY STALE -- RESTART"
+                sys.exit()
+
+            return
+
+        if current_frame[0] is None:
+            print "THERM: NO FRAME {:s}".format(str(time_now))
+            self.invalid_captures += 1
+
+            if self.invalid_captures > 2:
+                print "THERM: NO CAPTURES -- RESTART"
                 sys.exit()
 
             return
 
         frame_mutex.acquire()
         data = current_frame[0]
+        assert current_frame[1] == False
         current_frame = [None, True]
         frame_mutex.release()
 
-        if data is None:
-            print "THERM: NO THERM FRAME {:s}".format(str(time_now))
-            self.invalid_captures += 1
-
-            if self.invalid_captures > 1:
-                print "THERM: NO CAPTURES"
-                sys.exit()
-
-            return
+        self.invalid_captures = 0
 
         data = cv2.resize(data[:, :], (640, 480))
         minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(data)
@@ -443,20 +449,20 @@ class UVCThermCam(object):
         data[-1][-1] = self.max_c
         img = raw_to_8bit(data)
         img = cv2.LUT(img, self.colour_map)
-        timestr = time_now.strftime("%y%m%d-%H%M%S")
-        fname = time_now.isoformat().replace(".", "_").replace(":", "_")
+        time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
+        fdate = time_now.isoformat().replace(".", "_").replace(":", "_")
 
         #
         # Max/min values in the top-left
         #
         font = cv2.FONT_HERSHEY_SIMPLEX
         time_str = "{:s} ({:.2f}, {:.2f})".format(
-            timestr, ktoc(minVal), ktoc(maxVal))
+            time_str, ktoc(minVal), ktoc(maxVal))
         cv2.putText(img, time_str, (10, 26),
-                    font, 0.70, (40, 60, 215), 1, cv2.CV_AA)
+                    font, 0.70, (40, 60, 215), 1, cv2.LINE_AA)
 
         output_img = os.path.join(
-            self.capture_location, "{:s}.png".format(fname))
+            self.capture_location, "{:s}.png".format(fdate))
         cv2.imwrite(output_img, img)
         shutil.copyfile(
             output_img, self.current_capture)
@@ -467,10 +473,10 @@ class UVCThermCam(object):
 if __name__ == "__main__":
 
     with uvc_setup():
+        thermcam = UVCThermCam("static/captures/thermcam")
         while True:
             time_now = datetime.datetime.now()
-            thermcam = UVCThermCam("/tmp")
             thermcam.capture(time_now)
-            time.sleep(0.1)
+            time.sleep(20)
 
 # EOF

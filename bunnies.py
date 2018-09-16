@@ -29,6 +29,8 @@ def get_capture_names(path, limit=False):
     # Remove "current" and "animated" and "webcam"
     captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
 
+    limit = False
+
     if limit:
         image_count = len(captures)
         select_count = 300
@@ -57,8 +59,8 @@ def show_capture():
     if capture == None:
         capture = captures[0]
 
-    show_webcam = capture in captures_web
-    show_thermcam = capture in captures_therm
+    show_webcam = capture in captures_web # if not capture else True
+    show_thermcam = capture in captures_therm if not capture else True
 
     videos = sorted_ls('static/videos/')
 

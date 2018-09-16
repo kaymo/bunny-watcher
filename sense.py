@@ -6,7 +6,7 @@ import time
 import datetime
 import shutil
 import os
-import cv2.cv as cv
+# import cv2.cv as cv
 import numpy
 import sys
 from multiprocessing import Process

@@ -6,14 +6,20 @@ import shutil
 import sys
 
 CAMERA = sys.argv[1]
+DATE = sys.argv[2]
 
 BUNNY_WATCHER_DIR = os.path.expandvars("${HOME}/bunny-watcher")
-CAPTURES_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/captures", CAMERA)
+# CAPTURES_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/captures", CAMERA)
+CAPTURES_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/captures", "{:s}_dated".format(CAMERA), DATE)
 VIDEOS_DIR = os.path.join(BUNNY_WATCHER_DIR, "static/videos")
 
 ext_map = {}
 ext_map["webcam"] = "jpg"
 ext_map["thermcam"] = "png"
+
+frame_map = {}
+frame_map["webcam"] = 20
+frame_map["thermcam"] = 20
 
 if not os.path.exists(VIDEOS_DIR):
     os.makedirs(VIDEOS_DIR)
@@ -24,7 +30,7 @@ try:
     # os.system("ffmpeg -y -framerate 10 -pattern_type glob -i '{}/2*.jpg' -pix_fmt rgb8 -ignore_loop 0 -s 576x384 {}/animated.gif".format(CAPTURES_DIR, CAPTURES_DIR) )
 
     # Create .mp4 for YouTube
-    framerate = 20
+    framerate = frame_map[CAMERA]
     quality = 2
 
     filename = "{:s}.mp4".format(CAMERA)
@@ -32,7 +38,7 @@ try:
     """
     Kim's command
     """
-    ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{input:s}/2*.{ext:s}' -framerate {framerate:d} -vcodec mpeg4 -q:v {quality:d} {output:s}/{filename:s}"
+    ffmpeg_command = "ffmpeg -y -pattern_type glob -i '{input:s}/2*.{ext:s}' -r 240 -framerate 1/20 -vf \"setpts=0.3*PTS\" -vsync 2 -vcodec mpeg4 -q:v {quality:d} {output:s}/{filename:s}"
     """
     Andrew's commands
     """
@@ -50,7 +56,8 @@ try:
     os.system(ffmpeg_command)
 
     # Copy the mp4 to the back-up location
-    curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+    # curr_time = datetime.datetime.now().isoformat().replace(".", "_").replace(":", "_")
+    curr_time = DATE
     curr_mp4_path = os.path.join(VIDEOS_DIR, curr_time + ".mp4")
     shutil.copyfile(os.path.join(CAPTURES_DIR, filename), curr_mp4_path)
 
@@ -61,11 +68,11 @@ try:
     # title = (datetime.date.today() - datetime.timedelta(1)
     #         ).strftime('%A %-e %B %Y')  # Yesterday's date
     title = "Bunnies ({:s}) - {}".format(CAMERA,
-                                         datetime.date.today().strftime('%A %-e %B %Y'))
+                                         DATE)
 
     # Upload to YouTube
-    # os.system("python {}/upload_video.py --noauth_local_webserver --file='{}/{}' --title='{}' --description='{}' --category={}".format(
-    #    BUNNY_WATCHER_DIR, CAPTURES_DIR, filename, title, desc, category))
+    os.system("python {}/upload_video.py --noauth_local_webserver --file='{}/{}' --title='{}' --description='{}' --category={}".format(
+       BUNNY_WATCHER_DIR, CAPTURES_DIR, filename, title, desc, category))
 
 except KeyboardInterrupt:
     print "Quitting ..."
