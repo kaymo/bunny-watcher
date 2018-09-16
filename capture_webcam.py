@@ -25,8 +25,8 @@ class CVWebcam(object):
         self.INTERVAL = 60
         self.JPEG_QUALITY = 85
 
-        self.FRAME_HEIGHT = 1536
-        self.FRAME_WIDTH = 2304
+        self.FRAME_WIDTH = 960 # 2304
+        self.FRAME_HEIGHT = 720 # 1536
         self.AUTO_BRIGHTNESS = 0.42
         self.AUTO_SATURATION = 0.46
         self.AUTO_CONTRAST = 0.46
@@ -52,67 +52,35 @@ class CVWebcam(object):
         Captures a single image from the camera and returns it in PIL format
         """
 
-        def get_property(property, property_id):
-            # print "{}: {}".format(property, camera.get(property_id))
-            pass
+        def get_property(camera, property_str, property_id):
+            print "{}: {}".format(property_str, camera.get(property_id))
 
         # Open the camera device and create OpenCV object
         camera = cv2.VideoCapture(self.CAMERA_PORT)
 
         if False:
             # Get the initial amera properties
-            get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
-            get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
-            get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
-            get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
-            get_property("saturation", cv.CV_CAP_PROP_SATURATION)
+            get_property("width",      cv2.CAP_PROP_FRAME_WIDTH)
+            get_property("height",     cv2.CAP_PROP_FRAME_HEIGHT)
+            get_property("brightness", cv2.CAP_PROP_BRIGHTNESS)
+            get_property("contrast",   cv2.CAP_PROP_CONTRAST)
+            get_property("saturation", cv2.CAP_PROP_SATURATION)
 
-        if False:
-            # Ensure that sensible values are set
-            camera.set(cv2.CAP_PROP_BRIGHTNESS,   self.AUTO_BRIGHTNESS)
-            camera.set(cv2.CAP_PROP_CONTRAST,     self.AUTO_CONTRAST)
-            camera.set(cv2.CAP_PROP_SATURATION,   self.AUTO_SATURATION)
-            camera.set(cv2.CAP_PROP_FRAME_WIDTH,  self.FRAME_WIDTH)
-            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
+        # Ensure that sensible values are set
+        camera.set(cv2.CAP_PROP_BRIGHTNESS,   self.AUTO_BRIGHTNESS)
+        camera.set(cv2.CAP_PROP_CONTRAST,     self.AUTO_CONTRAST)
+        camera.set(cv2.CAP_PROP_SATURATION,   self.AUTO_SATURATION)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH,  self.FRAME_WIDTH)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
 
-        if False:
-            get_property("brightness", cv.CV_CAP_PROP_BRIGHTNESS)
-            get_property("contrast",   cv.CV_CAP_PROP_CONTRAST)
-            get_property("saturation", cv.CV_CAP_PROP_SATURATION)
-            get_property("width",      cv.CV_CAP_PROP_FRAME_WIDTH)
-            get_property("height",     cv.CV_CAP_PROP_FRAME_HEIGHT)
+        get_property(camera, "brightness", cv2.CAP_PROP_BRIGHTNESS)
+        get_property(camera, "contrast",   cv2.CAP_PROP_CONTRAST)
+        get_property(camera, "saturation", cv2.CAP_PROP_SATURATION)
+        get_property(camera, "width",      cv2.CAP_PROP_FRAME_WIDTH)
+        get_property(camera, "height",     cv2.CAP_PROP_FRAME_HEIGHT)
 
         ret_val, image = camera.read()
-        print ret_val
-
-        #
-        # We now keep dark images!
-        #
-        remove_dark = False
-
-        if remove_dark:
-
-            # Discard any frames that are too dark
-            if ret_val and len(image) and len(image[0]) and len(image[0][0]):
-
-                # Keep image if the first pixel's avergae is greater than the threshold
-                if sum(image[0][0]) / len(image[0][0]) > self.RGB_DARK_THRESHOLD:
-                    ret_val = True
-                else:
-                    #
-                    # Keep image if the average pixel value is greater than a threshold
-                    #
-                    # https://stackoverflow.com/questions/43111029/how-to-find-the-average-colour-of-an-image-in-python-with-opencv
-                    #
-                    avg_color_per_row = numpy.average(image, axis=0)
-                    avg_color_img = numpy.average(avg_color_per_row, axis=0)
-                    avg_pixel = numpy.average(avg_color_img, axis=0)
-
-                    if avg_pixel > self.RGB_DARK_THRESHOLD:
-                        ret_val = True
-                    else:
-                        ret_val = False
-
+        print "Camera read returned: ", str(ret_val)
         del(camera)
         return ret_val, image
 
@@ -122,6 +90,7 @@ class CVWebcam(object):
         """
         time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
         [result, camera_capture] = self.get_image()
+        print "get_image returned: ", str(result)
 
         if result:
 
@@ -129,17 +98,19 @@ class CVWebcam(object):
             fdate = time_now.isoformat().replace(".", "_").replace(":", "_")
 
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(camera_capture, time_str, (8, 23),
-                    font, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(camera_capture, time_str, (12, 40),
+                    font, 1.2, (255, 255, 255), 2, cv2.LINE_AA)
 
             # Store the image in the history and copy over the 'current' view
 
             output_img = os.path.join(
                 self.CAPTURES_DIR, "{:s}.jpg".format(fdate))
-            cv2.imwrite(output_img, camera_capture,
+            imwrite_ret = cv2.imwrite(output_img, camera_capture,
                         [cv2.IMWRITE_JPEG_QUALITY, self.JPEG_QUALITY])
-            shutil.copyfile(
+            print "cv2.imwrite returned: ", imwrite_ret
+            copy_ret = shutil.copyfile(
                 output_img, self.CURRENT_CAPTURE)
+            print "shutil.copyfile returned: ", copy_ret
         else:
             curr_time = time_now.isoformat().replace(".", "_").replace(":", "_")
             print "No result for webcam at " + curr_time
@@ -151,6 +122,7 @@ if __name__ == "__main__":
         print str(time_now)
         webcam = CVWebcam("static/captures/webcam")
         webcam.capture(time_now)
+        break
         time.sleep(2)
 
 # EOF
