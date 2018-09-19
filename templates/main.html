@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
-  <h1>Bunny Watcher &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
+<h1><a href="/">Bunny Watcher</a> &mdash; <a href="https://www.youtube.com/channel/UCnXsE80xNi4UAJVV4kf2FQQ">YouTube</a></h1>
   <div class="current">
     {% if show_webcam %}
       <a href="{{ url_for('static', filename='captures/webcam/' + capture_name + '.jpg') }}">
