@@ -1,19 +1,15 @@
 #!/bin/bash
 
 source ${HOME}/.bashrc
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games
+export PATH=/usr/lib64/qt-3.3/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/avj/.local/bin:/home/avj/bin
 export LD_LIBRARY_PATH=/usr/local/lib
 
-cd ${HOME}/bunny-watcher
+cd ${HOME}/bunny-watcher/animation
 
-rm -f upload_webcam.log upload_thermcam.log
+rm -f animate.log
 
-# python ./animate.py webcam # |& cat > upload_webcam.log
+./run.sh |& cat > animate.log
 
-for i in 2018-05-14 2018-05-15 2018-05-16 2018-05-17 2018-05-18 2018-05-19; do
-    python ./animate.py thermcam "${i}" |& cat > "upload_thermcam_${i}.log"
-done
+cat animate.log
 
-cat upload_webcam.log
-cat upload_thermcam.log
-
+# EOF
