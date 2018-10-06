@@ -19,12 +19,12 @@ def sorted_ls(path):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
     return list(sorted(os.listdir(path), key=mtime, reverse=True))
 
-def get_capture_names(path, limit=False):
+def get_capture_names(path, limit=False, ext="jpg"):
     # Get a list of the captures
     captures = reversed(sorted(os.listdir(path)))
 
     # Remove the file extensions
-    captures = [filename[:-4] for filename in captures]
+    captures = [ os.path.splitext(filename)[0] for filename in captures if os.path.splitext(filename)[1][1:] == ext]
 
     # Remove "current" and "animated" and "webcam"
     captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
@@ -49,8 +49,8 @@ def show_capture():
     capture = request.args.get('capture')
 
     # Get a list of the captures
-    captures_web = get_capture_names('static/captures/webcam/')
-    captures_therm = get_capture_names('static/captures/thermcam/', limit=True)
+    captures_web = get_capture_names('static/captures/webcam/', ext="jpg")
+    captures_therm = get_capture_names('static/captures/thermcam/', ext="jpg")
 
     # Get the deduped joint list of captures
     captures = list(sorted(set(captures_web + captures_therm), reverse=True))
