@@ -65,11 +65,14 @@ class MontageVideo(object):
     Class to generate the video from two directories
     """
 
-    def __init__(self, output_name):
+    def __init__(self):
         self.webcam_path = "webcam"
         self.thermcam_path = "thermcam"
         self.montage_path = "montage"
-        self.output_name = output_name
+
+        time_now = datetime.datetime.now()
+        fdate = time_now.isoformat().replace(".", "_").replace(":", "_")
+        self.output_name = "{date:s}.webm".format(date=fdate)
 
         #
         # Common files
@@ -150,16 +153,26 @@ class MontageVideo(object):
         cmd = shlex.split("{ffmpeg:s} -y -threads {threads:d} -pattern_type glob -i '{input:s}/2*.{ext:s}' -r 240 -framerate 1/20 -vf \"setpts=0.5*PTS\" -vsync 2 -c:v libvpx -qmin 0 -qmax 50 -crf 5 -b:v 1M -c:a libvorbis {output:s}/{filename:s}".format(
             ffmpeg=self.ffmpeg, threads=self.threads, input=self.montage_path, ext="webp", output=".", filename=self.output_name))
         out = subprocess.check_output(cmd)
+        print(out)
 
+    def upload_video(self):
         #
-        # Call ffprobe to find its length
+        # Upload video
         #
+        desc = "Bunny Watcher"
+        category = "15"
+        all_files = sorted(self.common)
+        first = all_files[0].split("T")[0]
+        last = all_files[-1].split("T")[0]
+        title = "Bunnies - ({start:s} - {end:s})".format(start=first, end=last)
+
         cmd = shlex.split(
-            "{ffprobe:s} -loglevel error -show_format -show_entries format=duration -of compact=p=0:nk=1 {dir:s}/{video:s}".
+            'python upload_video.py --noauth_local_webserver --file="{file:s}" --title="{title:s}" --description="{desc:s}" --category="{category:s}"'.
             format(
-                ffprobe=self.ffprobe, dir=".",
-                video=self.output_name))
+                file=self.output_name, title=title, desc=desc,
+                category=category))
         out = subprocess.check_output(cmd)
+        print(out)
 
     def main(self):
         self.cleanup()
@@ -167,12 +180,10 @@ class MontageVideo(object):
         self.find_height()
         self.process_frames()
         self.generate_video()
+        self.upload_video()
 
 
 if __name__ == "__main__":
-    time_now = datetime.datetime.now()
-    fdate = time_now.isoformat().replace(".", "_").replace(":", "_")
-    output_name = "{date:s}.webm".format(date=fdate)
-    MontageVideo(output_name).main()
+    MontageVideo().main()
 
 # EOF
