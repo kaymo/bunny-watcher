@@ -21,9 +21,7 @@ class CVWebcam(object):
 
         self.CAMERA_PORT = None
         self.CAPTURES_DIR = capture_location
-        self.CURRENT_CAPTURE = os.path.join(self.CAPTURES_DIR, "current.jpg")
         self.INTERVAL = 60
-        self.JPEG_QUALITY = 85
 
         self.FRAME_WIDTH = 1280 # 2304
         self.FRAME_HEIGHT = 800 # 1536
@@ -32,6 +30,15 @@ class CVWebcam(object):
         self.AUTO_CONTRAST = 10
 
         self.RGB_DARK_THRESHOLD = 40
+
+        self.IMAGE_QUALITY = 100
+        self.IMAGE_FORMAT = cv2.IMWRITE_WEBP_QUALITY
+
+        self.unsharp = True
+        self.convert = True
+        self.save_fmt = "webp"
+        self.display_fmt = "jpg"
+        self.name = "Web"
 
 
     def detect_camera_port(self):
@@ -84,7 +91,7 @@ class CVWebcam(object):
 
         IGNORE = camera.read()
         ret_val, image = camera.read()
-        print "Camera read returned: ", str(ret_val)
+        # print "Camera read returned: ", str(ret_val)
         camera.release()
         del(camera)
         return ret_val, image
@@ -95,7 +102,7 @@ class CVWebcam(object):
         """
         time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
         [result, camera_capture] = self.get_image()
-        print "get_image returned: ", str(result)
+        print "{name:s}: get_image returned: {value:s}".format(name=self.name, value=str(result))
 
         if result:
 
@@ -108,17 +115,22 @@ class CVWebcam(object):
 
             # Store the image in the history and copy over the 'current' view
 
-            output_img = os.path.join(
-                self.CAPTURES_DIR, "{:s}.jpg".format(fdate))
+            output_base_name = os.path.join(
+                self.CAPTURES_DIR, "{:s}".format(fdate))
+            output_img = "{name:s}.{save_fmt:s}".format(name=output_base_name, save_fmt=self.save_fmt)
             imwrite_ret = cv2.imwrite(output_img, camera_capture,
-                        [cv2.IMWRITE_JPEG_QUALITY, self.JPEG_QUALITY])
-            print "cv2.imwrite returned: ", imwrite_ret
-            cmd = "convert -unsharp 10x4+1+0 {fname:s} {fname:s}".format(fname=output_img)
-            system_ret = os.system(cmd)
-            print "os.system returned: ", system_ret
-            copy_ret = shutil.copyfile(
-                output_img, self.CURRENT_CAPTURE)
-            print "shutil.copyfile returned: ", copy_ret
+                         [self.IMAGE_FORMAT, self.IMAGE_QUALITY])
+            print "{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret))
+            if self.unsharp:
+                cmd = "convert -unsharp 10x4+1+0 {fname:s} {fname:s}".format(fname=output_img)
+                system_ret = os.system(cmd)
+                print "{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret))
+            if self.convert:
+                cmd = "convert -quality 85 {fname:s}.{save_fmt:s} {fname:s}.{display_fmt:s}".format(fname=output_base_name, save_fmt=self.save_fmt, display_fmt=self.display_fmt)
+                system_ret = os.system(cmd)
+                print "{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret))
+
+
         else:
             curr_time = time_now.isoformat().replace(".", "_").replace(":", "_")
             print "No result for webcam at " + curr_time

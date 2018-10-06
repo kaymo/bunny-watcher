@@ -383,13 +383,22 @@ def uvc_setup():
 class UVCThermCam(object):
 
     def __init__(self, capture_location):
-        self.capture_location = capture_location
+
         self.min_c = ctok(5)
         self.max_c = ctok(28)
         self.colour_map = generate_colour_map()
-        self.current_capture = os.path.join(
-            self.capture_location, "current.png")
         self.invalid_captures = 0
+
+        self.CAPTURES_DIR = capture_location
+
+        self.IMAGE_QUALITY = 100
+        self.IMAGE_FORMAT = cv2.IMWRITE_WEBP_QUALITY
+
+        self.unsharp = False
+        self.convert = True
+        self.save_fmt = "webp"
+        self.display_fmt = "jpg"
+        self.name = "Therm"
 
     def capture(self, time_now):
         print "THERM: ENTER"
@@ -461,11 +470,23 @@ class UVCThermCam(object):
         cv2.putText(img, time_str, (10, 26),
                     font, 0.70, (40, 60, 215), 1, cv2.LINE_AA)
 
-        output_img = os.path.join(
-            self.capture_location, "{:s}.png".format(fdate))
-        cv2.imwrite(output_img, img)
-        shutil.copyfile(
-            output_img, self.current_capture)
+        camera_capture = img
+
+        if True:
+            output_base_name = os.path.join(
+                self.CAPTURES_DIR, "{:s}".format(fdate))
+            output_img = "{name:s}.{save_fmt:s}".format(name=output_base_name, save_fmt=self.save_fmt)
+            imwrite_ret = cv2.imwrite(output_img, camera_capture,
+                         [self.IMAGE_FORMAT, self.IMAGE_QUALITY])
+            print "{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret))
+            if self.unsharp:
+                cmd = "convert -unsharp 10x4+1+0 {fname:s} {fname:s}".format(fname=output_img)
+                system_ret = os.system(cmd)
+                print "{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret))
+            if self.convert:
+                cmd = "convert -quality 85 {fname:s}.{save_fmt:s} {fname:s}.{display_fmt:s}".format(fname=output_base_name, save_fmt=self.save_fmt, display_fmt=self.display_fmt)
+                system_ret = os.system(cmd)
+                print "{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret))
 
         print "THERM: DONE!"
 
