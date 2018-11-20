@@ -7,7 +7,7 @@ User=avj
 Type=forking
 Restart=on-failure
 RestartSec=3
-ExecStart=/usr/bin/bash -c '/usr/bin/screen -L -dmUS bunnies /bin/bash /home/avj/bunny-watcher/run_bunnies.sh"
+ExecStart=/usr/bin/bash -c '/usr/bin/screen -L -dmUS bunnies /bin/bash /home/avj/bunny-watcher/run_bunnies.sh'
 
 [Install]
 WantedBy=multi-user.target
