@@ -111,7 +111,7 @@ class CVWebcam(object):
 
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(camera_capture, time_str, (12, 40),
-                    font, 1.2, (255, 255, 255), 2, cv2.LINE_AA)
+                    font, 1.2, (40, 60, 215), 2, cv2.LINE_AA)
 
             # Store the image in the history and copy over the 'current' view
 
