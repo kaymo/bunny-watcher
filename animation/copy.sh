@@ -13,9 +13,9 @@ mkdir thermcam webcam
 # base=$(basename $web)
 base="*.webp"
 
-rsync --info=progress2 -aHXxv --numeric-ids --delete --progress -e "ssh -T -c arcfour -o Compression=no -x" ~/bunny-watcher/static/captures/thermcam/${base} thermcam
+rsync --info=progress2 -aHXxv --numeric-ids --delete --progress -e "ssh -T -c arcfour -o Compression=no -x" ~/bunny-watcher/static/captures/thermcam/${base} thermcam || true
 
-rsync --info=progress2 -aHXxv --numeric-ids --delete --progress -e "ssh -T -c arcfour -o Compression=no -x" ~/bunny-watcher/static/captures/webcam/${base} webcam
+rsync --info=progress2 -aHXxv --numeric-ids --delete --progress -e "ssh -T -c arcfour -o Compression=no -x" ~/bunny-watcher/static/captures/webcam/${base} webcam || true
 
 # EOF
 
