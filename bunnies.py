@@ -29,7 +29,8 @@ def get_capture_names(path, limit=False, ext="jpg"):
     # Remove "current" and "animated" and "webcam"
     captures = remove_items(captures, ["current", "webcam", "animated", "thermcam"])
 
-    limit = False
+    # We want to limit on the RPi
+    limit = True
 
     if limit:
         image_count = len(captures)
@@ -49,7 +50,9 @@ def show_capture():
     capture = request.args.get('capture')
 
     # Get a list of the captures
-    captures_web = get_capture_names('static/captures/webcam/', ext="jpg")
+
+    # Hack - we don't care about web images
+    captures_web = [] # get_capture_names('static/captures/webcam/', ext="jpg")
     captures_therm = get_capture_names('static/captures/thermcam/', ext="jpg")
 
     # Get the deduped joint list of captures
