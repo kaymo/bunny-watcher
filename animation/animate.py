@@ -84,7 +84,7 @@ class MontageVideo(object):
         #
         self.quality = 90
 
-        ffmpeg_dir = "ffmpeg-git-20181002-64bit-static"
+        ffmpeg_dir = "/usr/local/bin" # "ffmpeg-git-20181002-64bit-static"
         self.ffmpeg = os.path.join(ffmpeg_dir, "ffmpeg")
         self.ffprobe = os.path.join(ffmpeg_dir, "ffprobe")
 
@@ -113,7 +113,10 @@ class MontageVideo(object):
             [os.path.basename(image)
              for image in glob.glob(
                  os.path.join(self.thermcam_path, "*.webp"))])
-        self.common = thermcam.intersection(webcam)
+        # self.common = thermcam.intersection(webcam)
+
+        # Hack -- only process therm
+        self.common = thermcam
 
     def find_height(self):
         #
@@ -123,8 +126,9 @@ class MontageVideo(object):
             self.thermcam_path, next(iter(self.common)))
         cmd = shlex.split("identify {:s}".format(random_image))
         out = subprocess.check_output(cmd)
-        dimensions = out.split()[2]
+        dimensions = out.strip().split()[2]
         self.height = dimensions.split("x")[1]
+        print(self.height)
 
     def process_frames(self):
         #
@@ -144,14 +148,18 @@ class MontageVideo(object):
         #
         # process_frame resizes and creates the montage
         #
-        pool.map(process_frame, all_frames)
+        pool.map(process_frame, all_frames, chunksize=1)
 
     def generate_video(self):
+
+        # Tweak to only do the thermcam
+        input_path = self.thermcam_path
+
         #
         # Call ffmpeg to create the video
         #
         cmd = shlex.split("{ffmpeg:s} -y -threads {threads:d} -pattern_type glob -i '{input:s}/2*.{ext:s}' -r 240 -framerate 1/20 -vf \"setpts=0.5*PTS\" -vsync 2 -c:v libvpx -qmin 0 -qmax 50 -crf 5 -b:v 1M -c:a libvorbis {output:s}/{filename:s}".format(
-            ffmpeg=self.ffmpeg, threads=self.threads, input=self.montage_path, ext="webp", output=".", filename=self.output_name))
+            ffmpeg=self.ffmpeg, threads=self.threads, input=input_path, ext="webp", output=".", filename=self.output_name))
         out = subprocess.check_output(cmd)
         print(out)
 
@@ -159,12 +167,12 @@ class MontageVideo(object):
         #
         # Upload video
         #
-        desc = "Bunny Watcher"
+        desc = "Pomona Watcher"
         category = "15"
         all_files = sorted(self.common)
         first = all_files[0].split("T")[0]
         last = all_files[-1].split("T")[0]
-        title = "Bunnies - ({start:s} - {end:s})".format(start=first, end=last)
+        title = "Pomona - ({start:s} - {end:s})".format(start=first, end=last)
 
         cmd = shlex.split(
             'python upload_video.py --noauth_local_webserver --file="{file:s}" --title="{title:s}" --description="{desc:s}" --category="{category:s}"'.
@@ -177,8 +185,13 @@ class MontageVideo(object):
     def main(self):
         self.cleanup()
         self.find_common_files()
-        self.find_height()
-        self.process_frames()
+
+        # Do not need height
+        # self.find_height()
+
+        # Do not need to process frames
+        # self.process_frames()
+
         self.generate_video()
         self.upload_video()
 

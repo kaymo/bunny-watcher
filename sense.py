@@ -68,11 +68,11 @@ class BunnySense(object):
                 time_now = datetime.datetime.now()
                 print "LOOP", str(time_now)
 
-                p_webcam = Process(target=capture_webcam)
+                # p_webcam = Process(target=capture_webcam)
                 p_thermcam = Process(target=capture_thermcam)
-                p_webcam.start()
+                # p_webcam.start()
                 p_thermcam.start()
-                p_webcam.join()
+                # p_webcam.join()
                 p_thermcam.join()
 
                 self.clean_dir(self.webcam_dir)

@@ -384,8 +384,8 @@ class UVCThermCam(object):
 
     def __init__(self, capture_location):
 
-        self.min_c = ctok(5)
-        self.max_c = ctok(28)
+        self.min_c = ctok(7)
+        self.max_c = ctok(18)
         self.colour_map = generate_colour_map()
         self.invalid_captures = 0
 
