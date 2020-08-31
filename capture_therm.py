@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
 from ctypes import *
 import time
 import cv2
 import numpy as np
-import Queue
+import queue
 import platform
 import time
 import os
@@ -14,149 +20,8 @@ import shutil
 import sys
 from contextlib import contextmanager
 from multiprocessing import Lock
+from uvctypes import *
 
-
-try:
-    if platform.system() == 'Darwin':
-        libuvc = cdll.LoadLibrary("libuvc.dylib")
-    elif platform.system() == 'Linux':
-        libuvc = cdll.LoadLibrary("libuvc.so")
-    else:
-        libuvc = cdll.LoadLibrary("libuvc")
-except OSError:
-    print "Error: could not find libuvc!"
-
-
-class uvc_context(Structure):
-    _fields_ = [("usb_ctx", c_void_p),
-                ("own_usb_ctx", c_uint8),
-                ("open_devices", c_void_p),
-                ("handler_thread", c_ulong),
-                ("kill_handler_thread", c_int)]
-
-
-class uvc_device(Structure):
-    _fields_ = [("ctx", POINTER(uvc_context)),
-                ("ref", c_int),
-                ("usb_dev", c_void_p)]
-
-
-class uvc_stream_ctrl(Structure):
-    _fields_ = [("bmHint", c_uint16),
-                ("bFormatIndex", c_uint8),
-                ("bFrameIndex", c_uint8),
-                ("dwFrameInterval", c_uint32),
-                ("wKeyFrameRate", c_uint16),
-                ("wPFrameRate", c_uint16),
-                ("wCompQuality", c_uint16),
-                ("wCompWindowSize", c_uint16),
-                ("wDelay", c_uint16),
-                ("dwMaxVideoFrameSize", c_uint32),
-                ("dwMaxPayloadTransferSize", c_uint32),
-                ("dwClockFrequency", c_uint32),
-                ("bmFramingInfo", c_uint8),
-                ("bPreferredVersion", c_uint8),
-                ("bMinVersion", c_uint8),
-                ("bMaxVersion", c_uint8),
-                ("bInterfaceNumber", c_uint8)]
-
-
-class uvc_format_desc(Structure):
-    pass
-
-
-class timeval(Structure):
-    _fields_ = [("tv_sec", c_long), ("tv_usec", c_long)]
-
-
-class uvc_frame(Structure):
-    _fields_ = [  # /** Image data for this frame */
-        ("data", POINTER(c_uint8)),
-        # /** Size of image data buffer */
-        ("data_bytes", c_size_t),
-        # /** Width of image in pixels */
-        ("width", c_uint32),
-        # /** Height of image in pixels */
-        ("height", c_uint32),
-        # /** Pixel data format */
-        ("frame_format", c_uint),  # enum uvc_frame_format frame_format
-        # /** Number of bytes per horizontal line (undefined for compressed format) */
-        ("step", c_size_t),
-        # /** Frame number (may skip, but is strictly monotonically increasing) */
-        ("sequence", c_uint32),
-        # /** Estimate of system time when the device started capturing the image */
-        ("capture_time", timeval),
-        # /** Handle on the device that produced the image.
-        #  * @warning You must not call any uvc_* functions during a callback. */
-        ("source", POINTER(uvc_device)),
-        # /** Is the data buffer owned by the library?
-        #  * If 1, the data buffer can be arbitrarily reallocated by frame conversion
-        #  * functions.
-        #  * If 0, the data buffer will not be reallocated or freed by the library.
-        #  * Set this field to zero if you are supplying the buffer.
-        #  */
-        ("library_owns_data", c_uint8)]
-
-
-class uvc_device_handle(Structure):
-    _fields_ = [("dev", POINTER(uvc_device)),
-                ("prev", c_void_p),
-                ("next", c_void_p),
-                ("usb_devh", c_void_p),
-                ("info", c_void_p),
-                ("status_xfer", c_void_p),
-                ("status_buf", c_ubyte * 32),
-                ("status_cb", c_void_p),
-                ("status_user_ptr", c_void_p),
-                ("button_cb", c_void_p),
-                ("button_user_ptr", c_void_p),
-                ("streams", c_void_p),
-                ("is_isight", c_ubyte)]
-
-
-class lep_oem_sw_version(Structure):
-    _fields_ = [("gpp_major", c_ubyte),
-                ("gpp_minor", c_ubyte),
-                ("gpp_build", c_ubyte),
-                ("dsp_major", c_ubyte),
-                ("dsp_minor", c_ubyte),
-                ("dsp_build", c_ubyte),
-                ("reserved", c_ushort)]
-
-
-def call_extension_unit(devh, unit, control, data, size):
-    return libuvc.uvc_get_ctrl(devh, unit, control, data, size, 0x81)
-
-
-AGC_UNIT_ID = 3
-OEM_UNIT_ID = 4
-RAD_UNIT_ID = 5
-SYS_UNIT_ID = 6
-VID_UNIT_ID = 7
-
-UVC_FRAME_FORMAT_UYVY = 4
-UVC_FRAME_FORMAT_I420 = 5
-UVC_FRAME_FORMAT_RGB = 7
-UVC_FRAME_FORMAT_BGR = 8
-UVC_FRAME_FORMAT_Y16 = 13
-
-
-def print_device_info(devh):
-
-    vers = lep_oem_sw_version()
-    call_extension_unit(devh, OEM_UNIT_ID, 9, byref(vers), 8)
-    print "Version gpp: {0}.{1}.{2} dsp: {3}.{4}.{5}".format(
-        vers.gpp_major, vers.gpp_minor, vers.gpp_build,
-        vers.dsp_major, vers.dsp_minor, vers.dsp_build,
-    )
-
-    flir_pn = create_string_buffer(32)
-    call_extension_unit(devh, OEM_UNIT_ID, 8, flir_pn, 32)
-    print "FLIR part #: {0}".format(flir_pn.raw)
-
-    flir_sn = create_string_buffer(8)
-    call_extension_unit(devh, SYS_UNIT_ID, 3, flir_sn, 8)
-    print "FLIR serial #: {0}".format(repr(flir_sn.raw))
 
 
 """
@@ -203,17 +68,14 @@ def py_frame_callback(frame, userptr):
     frame_mutex.acquire()
     frame_watchdog += 1
     if frame_watchdog >= watchdog_count:
-        print "THERM: UPDATING: {:d}".format(frame_watchdog)
-        print "THERM: {:d}".format(len(data))
+        print("THERM: UPDATING: {:d}".format(frame_watchdog))
+        print("THERM: {:d}".format(len(data)))
         frame_watchdog = 0
     current_frame = [data, False]
     frame_mutex.release()
 
 
-PTR_PY_FRAME_CALLBACK = CFUNCTYPE(
-    None, POINTER(uvc_frame),
-    c_void_p)(py_frame_callback)
-
+PTR_PY_FRAME_CALLBACK = CFUNCTYPE(None, POINTER(uvc_frame), c_void_p)(py_frame_callback)
 
 def generate_colour_map():
     """
@@ -277,10 +139,8 @@ def generate_colour_map():
         193, 255, 249, 207, 255, 251, 221, 255, 253, 235, 255, 255, 24]
 
     def chunk(
-        ulist, step): return map(
-            lambda i: ulist[i: i + step],
-        xrange(0, len(ulist),
-               step))
+        ulist, step): return [ulist[i: i + step] for i in range(0, len(ulist),
+               step)]
 
     chunks = chunk(colourmap_ironblack, 3)
 
@@ -331,6 +191,7 @@ def display_temperature(img, val_k, loc, color):
 
 @contextmanager
 def uvc_setup():
+
     ctx = POINTER(uvc_context)()
     dev = POINTER(uvc_device)()
     devh = POINTER(uvc_device_handle)()
@@ -338,22 +199,22 @@ def uvc_setup():
 
     res = libuvc.uvc_init(byref(ctx), 0)
     if res < 0:
-        print "uvc_init error"
-        return
+        print("uvc_init error")
+        exit(1)
 
     try:
-        res = libuvc.uvc_find_device(ctx, byref(dev), 0x1e4e, 0x0100, 0)
+        res = libuvc.uvc_find_device(ctx, byref(dev), PT_USB_VID, PT_USB_PID, 0)
         if res < 0:
-            print "uvc_find_device error"
-            return
+            print("uvc_find_device error")
+            exit(1)
 
         try:
             res = libuvc.uvc_open(dev, byref(devh))
             if res < 0:
-                print "uvc_open error"
-                return
+                print("uvc_open error")
+                exit(1)
 
-            print "device opened!"
+            print("device opened!")
 
             print_device_info(devh)
 
@@ -365,7 +226,7 @@ def uvc_setup():
                 devh, byref(ctrl),
                 PTR_PY_FRAME_CALLBACK, None, 0)
             if res < 0:
-                print "uvc_start_streaming failed: {0}".format(res)
+                print("uvc_start_streaming failed: {0}".format(res))
                 return
 
             try:
@@ -401,7 +262,7 @@ class UVCThermCam(object):
         self.name = "Therm"
 
     def capture(self, time_now):
-        print "THERM: ENTER"
+        print("THERM: ENTER")
 
         global current_frame
         global frame_mutex
@@ -416,25 +277,25 @@ class UVCThermCam(object):
         """
 
         if current_frame[1]:
-            print "THERM: STALE FRAME {:s}".format(str(time_now))
+            print("THERM: STALE FRAME {:s}".format(str(time_now)))
             time.sleep(1)
 
         if current_frame[1]:
-            print "THERM: STILL STALE {:s}".format(str(time_now))
+            print("THERM: STILL STALE {:s}".format(str(time_now)))
             self.invalid_captures += 1
 
             if self.invalid_captures > 2:
-                print "THERM: VERY STALE -- RESTART"
+                print("THERM: VERY STALE -- RESTART")
                 sys.exit()
 
             return
 
         if current_frame[0] is None:
-            print "THERM: NO FRAME {:s}".format(str(time_now))
+            print("THERM: NO FRAME {:s}".format(str(time_now)))
             self.invalid_captures += 1
 
             if self.invalid_captures > 2:
-                print "THERM: NO CAPTURES -- RESTART"
+                print("THERM: NO CAPTURES -- RESTART")
                 sys.exit()
 
             return
@@ -478,17 +339,17 @@ class UVCThermCam(object):
             output_img = "{name:s}.{save_fmt:s}".format(name=output_base_name, save_fmt=self.save_fmt)
             imwrite_ret = cv2.imwrite(output_img, camera_capture,
                          [self.IMAGE_FORMAT, self.IMAGE_QUALITY])
-            print "{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret))
+            print("{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret)))
             if self.unsharp:
                 cmd = "convert -unsharp 10x4+1+0 {fname:s} {fname:s}".format(fname=output_img)
                 system_ret = os.system(cmd)
-                print "{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret))
+                print("{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret)))
             if self.convert:
                 cmd = "convert -quality 85 {fname:s}.{save_fmt:s} {fname:s}.{display_fmt:s}".format(fname=output_base_name, save_fmt=self.save_fmt, display_fmt=self.display_fmt)
                 system_ret = os.system(cmd)
-                print "{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret))
+                print("{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret)))
 
-        print "THERM: DONE!"
+        print("THERM: DONE!")
 
 
 if __name__ == "__main__":

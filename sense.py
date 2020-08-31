@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 # Dependencies: OpenCV
+from __future__ import print_function
+from builtins import str
+from builtins import object
 import cv2
 import time
 import datetime
@@ -66,7 +69,7 @@ class BunnySense(object):
         while True:
             try:
                 time_now = datetime.datetime.now()
-                print "LOOP", str(time_now)
+                print("LOOP", str(time_now))
 
                 # p_webcam = Process(target=capture_webcam)
                 p_thermcam = Process(target=capture_thermcam)
@@ -88,10 +91,10 @@ class BunnySense(object):
                 time.sleep(sleep_cnt.total_seconds())
 
             except KeyboardInterrupt as _:
-                print "\nQuitting ..."
+                print("\nQuitting ...")
                 break
             except Exception as e:
-                print str(e)
+                print(str(e))
                 continue
 
 

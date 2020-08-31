@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 # Dependencies: OpenCV
+from __future__ import print_function
+from builtins import str
+from builtins import object
 import cv2
 # from cv2 import cv
 import time
@@ -59,7 +62,7 @@ class CVWebcam(object):
         """
 
         def get_property(camera, property_str, property_id):
-            print "{}: {}".format(property_str, camera.get(property_id))
+            print("{}: {}".format(property_str, camera.get(property_id)))
 
         self.detect_camera_port()
 
@@ -102,7 +105,7 @@ class CVWebcam(object):
         """
         time_str = time_now.strftime("%Y-%m-%d %H:%M:%S")
         [result, camera_capture] = self.get_image()
-        print "{name:s}: get_image returned: {value:s}".format(name=self.name, value=str(result))
+        print("{name:s}: get_image returned: {value:s}".format(name=self.name, value=str(result)))
 
         if result:
 
@@ -120,26 +123,26 @@ class CVWebcam(object):
             output_img = "{name:s}.{save_fmt:s}".format(name=output_base_name, save_fmt=self.save_fmt)
             imwrite_ret = cv2.imwrite(output_img, camera_capture,
                          [self.IMAGE_FORMAT, self.IMAGE_QUALITY])
-            print "{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret))
+            print("{name:s}: cv2.imwrite returned: {value:s}".format(name=self.name, value=str(imwrite_ret)))
             if self.unsharp:
                 cmd = "convert -unsharp 10x4+1+0 {fname:s} {fname:s}".format(fname=output_img)
                 system_ret = os.system(cmd)
-                print "{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret))
+                print("{name:s}: os.system (unsharp) returned: {value:s}".format(name=self.name, value=str(system_ret)))
             if self.convert:
                 cmd = "convert -quality 85 {fname:s}.{save_fmt:s} {fname:s}.{display_fmt:s}".format(fname=output_base_name, save_fmt=self.save_fmt, display_fmt=self.display_fmt)
                 system_ret = os.system(cmd)
-                print "{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret))
+                print("{name:s}: os.system (convert) returned: {value:s}".format(name=self.name, value=str(system_ret)))
 
 
         else:
             curr_time = time_now.isoformat().replace(".", "_").replace(":", "_")
-            print "No result for webcam at " + curr_time
+            print("No result for webcam at " + curr_time)
 
 
 if __name__ == "__main__":
     while True:
         time_now = datetime.datetime.now()
-        print str(time_now)
+        print(str(time_now))
         webcam = CVWebcam("static/captures/webcam")
         webcam.capture(time_now)
         break
